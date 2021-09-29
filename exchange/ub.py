@@ -1,5 +1,6 @@
 import pyupbit
 import time
+import pprint
 
 #const
 TRADE_BUY = 6010
@@ -71,3 +72,52 @@ def ub_wait_order(client, order, TEST):
         #fixme: rest of error case check
 
         time.sleep(1)
+
+def ub_withdraw(client2, asset, t_q, addr, tag):
+    print(f"ub_withdraw:{asset} {t_q}q to {addr} with {tag}")
+    try:
+        result = client2.Withdraw.Withdraw_coin(
+            currency=asset,
+            amount=str(t_q),
+            address=addr,
+            secondary_address=tag)['result']
+        #Exception has occurred: KeyError
+        #result['error']['message']
+        uuid = result['uuid']
+        #txid = result['txid'] #not avail
+        #print(resp['result'])
+        return uuid
+    except Exception as e:
+        msg = result['error']['message']
+        print(msg)
+        raise Exception(msg)
+
+def ub_wait_withdraw(client2, uuid):
+    cnt = 0
+    while True:
+        result = client2.Withdraw.Withdraw_info(uuid=uuid)['result']
+        #pprint.pprint(result)
+        state = result['state']
+        txid = result['txid']
+        #print(txid)
+        print(f"({cnt})ub_wait_withdraw: state={state}")
+        if state == 'DONE':
+            return txid
+        time.sleep(1)
+        cnt = cnt + 1
+
+def ub_wait_deposit(client2, txid):
+    cnt = 0
+    while True:
+        #state = ub_raw_get_deposit(ub_acc_key, ub_sec_key, txid, asset)[0]['state']
+        #print('ub_raw_get_deposit:state:' + state)
+        result = client2.Deposit.Deposit_info(
+            #uuid='35a4f1dc-1db5-4d6b-89b5-7ec137875956'
+            txid=txid
+        )['result']
+        state = result['state']
+        print(f"({cnt})ub_wait_deposit: state={state}")
+        if state =='ACCEPTED' or state == 'DONE':
+            break
+        time.sleep(1)
+        cnt = cnt + 1

@@ -138,6 +138,60 @@ def bn_wait_order(client, pair, order, TEST):
         
         time.sleep(1)
 
-    
+def bn_get_deposit(client, asset, txid):
+    result = client.get_deposit_history(coin=asset)
+    filtered = list(filter(lambda x: x['txId'] == txid, result))
+    return filtered
 
-    #"status": "NEW",
+def bn_wait_deposit(client, asset, txid):
+    cnt = 0
+    while True:
+        state = bn_get_deposit(client, asset, txid)[0]['status']
+        print(f"({cnt})bn_get_deposit: state={state}")
+        if state == 0: #pending
+            pass
+        elif state == 6: #credited but cannot withdraw
+            pass
+        elif state == 1: #success
+            return
+        time.sleep(1)
+        cnt = cnt + 1
+
+def bn_withdraw(client, asset, addr, tag, t_q):
+    withdraw = client.withdraw(
+        coin=asset,
+        address=addr,
+        addressTag=tag, #or TAG
+        amount=t_q)    
+    return withdraw['id']
+
+def bn_wait_withdraw(client, withdraw_id):
+    cnt = 0
+    while True:
+        withdraw_result = client.get_withdraw_history_id(withdraw_id)
+        #pprint.pprint(withdraw_result)
+        print(f"({cnt})bn_wait_withdraw: state={withdraw_result['status']}")
+
+        if 'txId' in withdraw_result:
+            txid = withdraw_result['txId']
+            print(f"txid{txid}")
+        else:
+            _id = withdraw_result['id']
+            #print(f"id{_id}")
+        
+        '''
+        https://binance-docs.github.io/apidocs/spot/en/#deposit-history-supporting-network-user_data
+        0(0:Email Sent,1:Cancelled 2:Awaiting Approval 3:Rejected 4:Processing 5:Failure 6:Completed)
+        '''
+        if withdraw_result['status'] == 1:
+            raise Exception('ub_wait_withdraw:order canceled')
+        elif withdraw_result['status'] == 3:
+            raise Exception('ub_wait_withdraw:order rejected')
+        elif withdraw_result['status'] == 4:
+            #print(f"processing..")
+            pass
+        elif withdraw_result['status'] == 6:
+            print('complete..')
+            return txid
+        time.sleep(1)
+        cnt = cnt + 1

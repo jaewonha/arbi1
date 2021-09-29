@@ -4,13 +4,20 @@ import pprint
 import time
 import traceback
 
+from upbit.client import Upbit
+import pyupbit
+
 from exchange import *
 
-import pyupbit
+
 #from pyupbit import WebSocketManager
 ub_acc_key = "p2uhQ8xdqxhEvslccOPkwzreXiuTWysaNTcYigWq"          # 본인 값으로 변경
 ub_sec_key = "k55DdoFw2sPRSYGMzB4IzwNna7ywPHYj1562QykN"          # 본인 값으로 변경
 upbit = pyupbit.Upbit(ub_acc_key, ub_sec_key)
+
+upbit2 = Upbit(ub_acc_key, ub_sec_key)
+# resp = upbit2.Withdraw.Withdraw_info_all()
+# print(resp['result'])
 
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 bn_api_key = 'xc88zHqhZjLhTlYLlHRy2k30tKVVEV3oZq2GodtGP8gQloThM2R1KfMMED4goG3c'
@@ -21,65 +28,68 @@ asset = 'EOS'
 ub_pair = ub_krw_pair(asset)
 bn_pair = bn_usdt_pair(asset)
 
-t_q = bn_get_spot_balance(binance, asset, False)
-print(t_q)
-#TEST = False
-#UB_TEST = False
-#BN_TEST = True
-
-#exit(0)
-#bn->ub
-
 ub_eos_addr = 'eosupbitsusr'
 ub_eos_memo = '5772f423-5c5a-4361-9678-2e070338fec1'
 
-#3a. withdraw
-# withdraw = binance.withdraw(
-#     coin=asset,
-#     address=ub_eos_addr,
-#     addressTag=ub_eos_memo, #or TAG
-#     amount=t_q)
+bn_eos_addr = 'binancecleos'
+bn_eos_memo = '109642124'
+
+IN_BN2UB_TEST = True
+OUT_UB2BN_TEST = True
+
+
+#exit(0)1
+#bn->ub
+
+if IN_BN2UB_TEST:
+    print("IN_BN2UB_TEST")
+    # asset_withdraws = binance.get_withdraw_history(coin=asset)
+    # print(asset_withdraws)
     
-#withdraw_id = withdraw['id']
+    #txid = '78b146e80e38ee0274d0f92fc5bbbcc54cf769dfcc6fa41e18544bd43b012233'
+    t_q = bn_get_spot_balance(binance, asset, False) #fixme:withdraw chance q
+    print(f"t_q:{t_q}")
 
-withdraw_id = 'e08eaa9dde9c4e078bc0a9e2ad84fc88'
-#3b. wait finished - BN
-while True:
-    withdraw_result = binance.get_withdraw_history_id(withdraw_id)
-    pprint.pprint(withdraw_result)
-    print(f"withdraw_staus:{withdraw_result['status']}")
-    txid = withdraw_result['txId']
-    if withdraw_result['status'] == 4:
-        print('processing..')
-    elif withdraw_result['status'] == 6:
-        print('complete..')
-        break
-    time.sleep(1)
+    #3a. withdraw
+    withdraw_id = bn_withdraw(binance, asset, ub_eos_addr, ub_eos_memo, t_q)
+    #withdraw_id = '43fa4ae2f0ee4d1198287a454a0bd72f'
+    print(f"withdraw_id:{withdraw_id}")
 
-#3c. wait deposit - UB
-#txid = '79116e44a26b12f8b9921f201270b9cfa21f59ae8900823525b6851404e3bc4f'
-while True:
-    state = ub_raw_get_deposit(ub_acc_key, ub_sec_key, txid, asset)[0]['state']
-    print('ub_raw_get_deposit:state:' + state)
-    if state =='ACCEPTED': #state == 'DONE' or 
-        break
+    #3b. wait finished - BN
+    txid = bn_wait_withdraw(binance, withdraw_id)
+    print(f"txid:{txid}")
 
-#check balance
-print(ub_get_spot_balance(upbit, asset))
+    #3c. wait deposit - UB
+    ub_wait_deposit(upbit2, txid)
 
-#             #     입출금 현황 
-#     def get_deposit_withdraw_status(self, contain_req=False):
+    #check balance
+    print(ub_get_spot_balance(upbit, asset))
 
 
-#             #     개별 출금 조회
-#     def get_individual_withdraw_order(self, uuid: str, currency: str, contain_req=False):
+if OUT_UB2BN_TEST:
+    print("OUT_UB2BN_TEST")
+    # resp = upbit2.Withdraw.Withdraw_info_all()
+    # pprint.pprint(resp['result'])
+    # exit(0)
 
+    withdraw_chance = upbit2.Withdraw.Withdraw_chance(
+        currency=asset
+    )['result']
+    assert withdraw_chance['account']['currency'] == asset
+    t_q = round(float(withdraw_chance['account']['balance']), 4)
+    print(f"t_q:{t_q}")
 
-#             #     코인 출금하기  
-#     def withdraw_coin(self, currency, amount, address, secondary_address='None', transaction_type='default', contain_req=False):
+    #3a. withdraw
+    uuid = ub_withdraw(upbit2, asset, t_q, bn_eos_addr, bn_eos_memo)
+    #uuid = 'ca81f1e3-d019-4350-b739-d6b110a03f08'
+    print(f"uuid:{uuid}")
 
+    #3b. wait finished - UB
+    txid = ub_wait_withdraw(upbit2, uuid)
+    print(f"txid:{txid}")
 
-#             #     원화 출금하기
-#     def withdraw_cash(self, amount: str, contain_req=False):
-
-
+    #3c. wait deposit - BN
+    bn_wait_deposit(binance, asset, txid)
+    
+    #check balance
+    print(bn_get_spot_balance(binance, asset))
