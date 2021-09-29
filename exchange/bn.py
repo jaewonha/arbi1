@@ -3,6 +3,8 @@ from datetime import datetime, date, timedelta
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 from binance.exceptions import BinanceAPIException, BinanceOrderException
 #from binance import Client, AsyncClient, DepthCacheManager, BinanceSocketManager
+import time
+import math
 
 #const
 TRADE_BUY = 6010
@@ -12,11 +14,14 @@ FUT_SHORT = 7010
 FUT_LONG  = 7011
 
 #func
-def bn_get_spot_balance(client, asset):
+def bn_get_spot_balance(client, asset, doRound = True):
     #print('### spot balance ###')
     balance = client.get_asset_balance(asset='EOS')
     assert balance['asset'] == 'EOS'
-    s_q = math.floor(float(balance['free'])*10)/10
+    if doRound:
+        s_q = math.floor(float(balance['free'])*10)/10 #2자리 미만 안쓰임
+    else:
+        s_q = float(balance['free'])
     #print(f"eos: q={s_q}")
     return s_q
 
@@ -39,7 +44,7 @@ def bn_get_fut_balance(client, asset, _type):
     else:
         print('unknown type:' + _type)
 
-def bn_usdt_pair(pair):
+def bn_usdt_pair(asset):
     return asset + 'USDT'
 
 def bn_spot_1st_bid(client, pair): #highest buying bids
@@ -77,7 +82,7 @@ def bn_get_trade_type(tradeMode):
 
 def bn_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
     tradeType = bn_get_trade_type(tradeMode)
-    print(f"[bn_spot_{tradeType}]{pair} {t_q} @ {t_p}$, TEST={TEST}")
+    print(f"[bn_spot_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
     if TEST:
         return client.create_test_order(
             symbol=pair,
@@ -114,3 +119,25 @@ def bn_fut_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
             timeInForce='GTC',
             price=t_p,
             quantity=t_q)
+
+def bn_wait_order(client, pair, order, TEST):
+    if TEST:
+        return
+
+    print(order)
+    while True:
+        result = client.get_order(symbol=pair,orderId=order['orderId'])
+        state = result['status']
+        print(f"order_state:{state}")
+
+        if state == 'FILLED':
+            return True
+        elif state == 'CANCELED':
+            raise Exception('bn_wait_order:order canceled')
+        #fixme: rest of error case check
+        
+        time.sleep(1)
+
+    
+
+    #"status": "NEW",

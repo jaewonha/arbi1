@@ -8,7 +8,7 @@ import math
 from ..exchange import *
 
 def arbi_in_bn_to_ub(binance, upbit, asset, maxUSD, krwPerUSD, TEST= True):
-    balUSDT = get_spot_balance('USDT')
+    balUSDT = bn_get_spot_balance('USDT')
 
     #1. check spot balance is enough
     if balUSDT < maxUSD:
@@ -54,7 +54,7 @@ def arbi_in_bn_to_ub(binance, upbit, asset, maxUSD, krwPerUSD, TEST= True):
     ##4. Sell & UnHedge
     #4a. Spot Sell
     ub_pair = ub_krw_pair(asset)
-    t_p, av_q = ub_spot_1st_bid(upbit, ub_pair)
+    t_p, av_q = ub_spot_1st_bid(ub_pair)
     ub_spot_trade(upbit, ub_pair, TRADE_SELL, t_p, t_q, TEST)
 
     #4b. Futures Long

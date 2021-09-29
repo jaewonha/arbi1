@@ -11,12 +11,12 @@ FUT_LONG  = 7011
 
 #func
 def ub_get_spot_balance(client, asset):
-    return upbit.get_balance(asset)
+    return client.get_balance(asset)
 
 def ub_krw_pair(asset):
     return 'KRW-' + asset
 
-def ub_spot_1st_bid(client, pair): #highest buying bids
+def ub_spot_1st_bid(pair): #highest buying bids
     orderMeta = pyupbit.get_orderbook(tickers=pair)[0]
     orderBook = orderMeta['orderbook_units']
     od_1st = orderBook[0]
@@ -24,7 +24,7 @@ def ub_spot_1st_bid(client, pair): #highest buying bids
     av_q = od_1st['bid_size']
     return t_p, av_q
 
-def ub_spot_1st_ask(client, pair): #lowest selling price
+def ub_spot_1st_ask(pair): #lowest selling price
     orderMeta = pyupbit.get_orderbook(tickers=pair)[0]
     orderBook = orderMeta['orderbook_units']
     od_1st = orderBook[0]
@@ -42,7 +42,7 @@ def ub_get_trade_type(tradeMode):
     exit(0)
 
 def ub_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
-    print(f"[ub_spot_{ub_get_trade_type(tradeMode)}]{pair} {t_q} @ {t_p}$, TEST={TEST}")
+    print(f"[ub_spot_{ub_get_trade_type(tradeMode)}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
     if TEST:
         return
 
@@ -54,7 +54,10 @@ def ub_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
         print(f"ub_get_trade_type:invalide mode={tradeMode}")
         exit(0)
         
-def ub_wait_order(client, order):
+def ub_wait_order(client, order, TEST):
+    if TEST:
+        return
+        
     print(order)
     while True:
         result = client.get_order(order['uuid'])
@@ -65,5 +68,6 @@ def ub_wait_order(client, order):
             return True
         elif state == 'cancel':
             raise Exception('ub_wait_order:order canceled')
-            
+        #fixme: rest of error case check
+
         time.sleep(1)
