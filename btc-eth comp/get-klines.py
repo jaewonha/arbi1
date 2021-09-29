@@ -56,7 +56,7 @@ async def main():
     
     symbol = 'EOSUSDT'
 
-    days=7
+    days=3
     #days=180
     #yesterday = date.today() - timedelta(365*2-1) #2 years
     yesterday = date.today() - timedelta(days)
@@ -67,8 +67,9 @@ async def main():
     # fetch 1 minute klines for the last day up until now
     #klines = client.get_historical_klines(symbol, Client.KLINE_INTERVAL_1DAY, from_ts)
     klines = []
+    async for ohlc in await client.get_historical_klines_generator(symbol, AsyncClient.KLINE_INTERVAL_1MINUTE, from_ts):
     #async for ohlc in await client.get_historical_klines_generator(symbol, AsyncClient.KLINE_INTERVAL_1DAY, from_ts):
-    async for ohlc in await client.get_historical_klines_generator(symbol, AsyncClient.KLINE_INTERVAL_1HOUR, from_ts):
+    #async for ohlc in await client.get_historical_klines_generator(symbol, AsyncClient.KLINE_INTERVAL_1HOUR, from_ts):
         #print(f"{bn_utc_to_str(str(ohlc[0]))}:[{ohlc[1]},{ohlc[2]},{ohlc[3]},{ohlc[4]}]")
         klines.append( [utc_to_str(str(ohlc[0]), True), ohlc[1], ohlc[2], ohlc[3], ohlc[4]] )
     df = pd.DataFrame(klines, columns=['ts','o','h','l','c']).set_index('ts')

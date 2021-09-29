@@ -7,6 +7,9 @@ import math
 
 from ..exchange import *
 
+ub_eos_addr = 'eosupbitsusr'
+ub_eos_memo = '5772f423-5c5a-4361-9678-2e070338fec1'
+
 def arbi_in_bn_to_ub(binance, upbit, asset, maxUSD, krwPerUSD, TEST= True):
     balUSDT = bn_get_spot_balance('USDT')
 
@@ -15,7 +18,7 @@ def arbi_in_bn_to_ub(binance, upbit, asset, maxUSD, krwPerUSD, TEST= True):
         print(f"insufficient USDT balance {balUSDT} < {maxAmt}")
         return False
 
-    ##2. Hedge & Buy
+    #### 2. Hedge & Buy ####
     #2a. Spot Buy
     bn_pair = bn_usdt_pair(asset)
     t_p, av_q = bn_get_1st_ask(binance, bn_pair)
@@ -27,31 +30,23 @@ def arbi_in_bn_to_ub(binance, upbit, asset, maxUSD, krwPerUSD, TEST= True):
     f_t_p, f_av_q = bn_fut_1st_bid(binance, bn_pair)
     bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q, TEST)
 
-    #3a. Withdrawal
-    ub_eos_addr = 'eosupbitsusr'
-    ub_eos_memo = '5772f423-5c5a-4361-9678-2e070338fec1'
+    #### 3. swap exchange ####
+    #3a. withdraw
+    withdraw_id = bn_withdraw(binance, asset, ub_eos_addr, ub_eos_memo, t_q)
+    #withdraw_id = '43fa4ae2f0ee4d1198287a454a0bd72f'
+    print(f"withdraw_id:{withdraw_id}")
 
-    #bn_deposite_addr = client.get_deposit_address(coin=asset)
+    #3b. wait finished - BN
+    txid = bn_wait_withdraw(binance, withdraw_id)
+    print(f"txid:{txid}")
 
-    withdraw = binance.withdraw(
-        coin=asset,
-        address=ub_address,
-        addressMemo=ub_eos_memo, #or TAG
-        amount=t_q)
+    #3c. wait deposit - UB
+    ub_wait_deposit(upbit2, txid)
 
-    #3b. wait finished
-    while True:
-        withdraw_result = client.get_withdraw_history(withdraw_id['id'])
-        if withdraw_result['status'] == 6:
-            break
+    #check balance
+    print(ub_get_spot_balance(upbit, asset))
 
-    #3c. wait deposit
-
-
-    #except BinanceAPIException as e:
-        #print(e)
-
-    ##4. Sell & UnHedge
+    #### 4. Sell & UnHedge ####
     #4a. Spot Sell
     ub_pair = ub_krw_pair(asset)
     t_p, av_q = ub_spot_1st_bid(ub_pair)
