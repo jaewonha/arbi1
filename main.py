@@ -64,6 +64,7 @@ else:
         print('not go')
         exit(0)
 
+cnt = 0
 while True:
     now = datetime.now()
     print(now)
@@ -93,15 +94,19 @@ while True:
         print(msg)
         f.write(msg+'\n')
         if arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, usd_conv, ORDER_TEST):
+            cnt = cnt + 1
             status = 'UB'
 
     if status == 'UB' and kimp<OUT_TH:
         msg = f"time to flight(UB->BN)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
         print(msg)
         f.write(msg+'\n')
-        #if arbi_out_ub_to_bn(binance, upbit, upbit2, asset, maxUSD*usd_conv, usd_conv, ORDER_TEST):
-        status = 'BN'
+        if arbi_out_ub_to_bn(binance, upbit, upbit2, asset, maxUSD*usd_conv, usd_conv, ORDER_TEST):
+            cnt = cnt + 1
+            status = 'BN'
     
+    if cnt > 5:
+        exit(0)
     time.sleep(1)
 
 
