@@ -16,8 +16,8 @@ FUT_LONG  = 7011
 #func
 def bn_get_spot_balance(client, asset, doRound = True):
     #print('### spot balance ###')
-    balance = client.get_asset_balance(asset='EOS')
-    assert balance['asset'] == 'EOS'
+    balance = client.get_asset_balance(asset=asset)
+    assert ( balance['asset'] == 'EOS' or balance['asset'] == 'USDT')
     if doRound:
         s_q = math.floor(float(balance['free'])*10)/10 #2자리 미만 안쓰임
     else:
@@ -102,7 +102,7 @@ def bn_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
 
 def bn_fut_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
     tradeType = bn_get_trade_type(tradeMode)
-    print(f"[bn_fut_{tradeType}]{pair} {t_q} @ {t_p}$, TEST={TEST}")
+    print(f"[bn_fut_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
     if TEST:
         return client.create_test_order(
             symbol=pair,
@@ -146,14 +146,16 @@ def bn_get_deposit(client, asset, txid):
 def bn_wait_deposit(client, asset, txid):
     cnt = 0
     while True:
-        state = bn_get_deposit(client, asset, txid)[0]['status']
-        print(f"({cnt})bn_get_deposit: state={state}")
-        if state == 0: #pending
-            pass
-        elif state == 6: #credited but cannot withdraw
-            pass
-        elif state == 1: #success
-            return
+        ret = bn_get_deposit(client, asset, txid)
+        if len(ret) > 0:
+            state = ret[0]['status']
+            print(f"({cnt})bn_get_deposit: state={state}")
+            if state == 0: #pending
+                pass
+            elif state == 6: #credited but cannot withdraw
+                pass
+            elif state == 1: #success
+                return
         time.sleep(1)
         cnt = cnt + 1
 
@@ -166,32 +168,58 @@ def bn_withdraw(client, asset, addr, tag, t_q):
     return withdraw['id']
 
 def bn_wait_withdraw(client, withdraw_id):
+    time.sleep(10)
+    cnt = 10
+    while True:
+        try:
+            withdraw_result = client.get_withdraw_history_id(withdraw_id)
+            #pprint.pprint(withdraw_result)
+            print(f"({cnt})bn_wait_withdraw: state={withdraw_result['status']}")
+
+            if 'txId' in withdraw_result:
+                txid = withdraw_result['txId']
+                print(f"txid{txid}")
+            else:
+                _id = withdraw_result['id']
+                #print(f"id{_id}")
+            
+            '''
+            https://binance-docs.github.io/apidocs/spot/en/#deposit-history-supporting-network-user_data
+            0(0:Email Sent,1:Cancelled 2:Awaiting Approval 3:Rejected 4:Processing 5:Failure 6:Completed)
+            '''
+            if withdraw_result['status'] == 1:
+                raise Exception('ub_wait_withdraw:order canceled')
+            elif withdraw_result['status'] == 3:
+                raise Exception('ub_wait_withdraw:order rejected')
+            elif withdraw_result['status'] == 4:
+                #print(f"processing..")
+                pass
+            elif withdraw_result['status'] == 6:
+                print('complete..')
+                return txid
+        except ConnectionError as ce:
+            print('consume connection error')
+        time.sleep(1)
+        cnt = cnt + 1
+
+def bn_wait_order(binance, pair, orderId):
     cnt = 0
     while True:
-        withdraw_result = client.get_withdraw_history_id(withdraw_id)
-        #pprint.pprint(withdraw_result)
-        print(f"({cnt})bn_wait_withdraw: state={withdraw_result['status']}")
+        order = binance.get_order(symbol=pair,orderId=orderId)
+        state = order['status']
+        print(f"({cnt})bn_wait_order: state={state}")
+        if state =='FILLED': #PARTIALLY_FILLED CANCELED REJECTED EXPIRED NEW
+            break
+        time.sleep(1)
+        cnt = cnt + 1
 
-        if 'txId' in withdraw_result:
-            txid = withdraw_result['txId']
-            print(f"txid{txid}")
-        else:
-            _id = withdraw_result['id']
-            #print(f"id{_id}")
-        
-        '''
-        https://binance-docs.github.io/apidocs/spot/en/#deposit-history-supporting-network-user_data
-        0(0:Email Sent,1:Cancelled 2:Awaiting Approval 3:Rejected 4:Processing 5:Failure 6:Completed)
-        '''
-        if withdraw_result['status'] == 1:
-            raise Exception('ub_wait_withdraw:order canceled')
-        elif withdraw_result['status'] == 3:
-            raise Exception('ub_wait_withdraw:order rejected')
-        elif withdraw_result['status'] == 4:
-            #print(f"processing..")
-            pass
-        elif withdraw_result['status'] == 6:
-            print('complete..')
-            return txid
+def bn_wait_fut_order(binance, pair, orderId):
+    cnt = 0
+    while True:
+        order = binance.futures_get_order(symbol=pair,orderId=orderId)
+        state = order['status']
+        print(f"({cnt})bn_wait_fut_order: state={state}")
+        if state =='FILLED': #PARTIALLY_FILLED CANCELED REJECTED EXPIRED NEW
+            break
         time.sleep(1)
         cnt = cnt + 1

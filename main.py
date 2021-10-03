@@ -1,7 +1,9 @@
 import pyupbit
 from pyupbit import WebSocketManager
+from upbit.client import Upbit
 
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
+from requests.exceptions import ConnectionError
 
 import json
 import pprint
@@ -13,12 +15,14 @@ import signal
 import sys
 
 from conv.krw2usd import krw_per_usd
+from arbi.arbi import *
 
 #init
 #UB - tradable
 access = "p2uhQ8xdqxhEvslccOPkwzreXiuTWysaNTcYigWq"
 secret = "k55DdoFw2sPRSYGMzB4IzwNna7ywPHYj1562QykN"
 upbit = pyupbit.Upbit(access, secret)
+upbit2 = Upbit(access, secret)
 
 #BN - tadable
 api_key = 'xc88zHqhZjLhTlYLlHRy2k30tKVVEV3oZq2GodtGP8gQloThM2R1KfMMED4goG3c'
@@ -26,17 +30,21 @@ sec_key = 'xzZ8D5qiSXCIJgirSSbD9fLqVFkjcDIHgms17j1u1SwdklCEClSSjqbRk83ZRmO1'
 binance = Client(api_key, sec_key)
 
 #config
+# status = 'UB'
+# OUT_TH = 2.0
+# IN_TH = 3.5
 status = 'BN'
-OUT_TH = 2.7
-IN_TH = 3.7
+OUT_TH = 2.0
+IN_TH = 2.5
+maxUSD = 50
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
-ORDER_TEST = True
+ORDER_TEST = False
 
 #init status
 lastMin = None
 
-date = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+date = datetime.now().strftime("%Y%m%d_%H%M%S")
 f = open(f"kimp{date}.txt", "a")
 
 def signal_handler(sig, frame):
@@ -57,7 +65,7 @@ else:
         exit(0)
 
 while True:
-    now = datetime.datetime.now()
+    now = datetime.now()
     print(now)
     if now.minute != lastMin:
         usd_conv = float(krw_per_usd()) #fixme: error handling for float version fail
@@ -84,15 +92,15 @@ while True:
         msg = f"time to get-in(BN->UB)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
         print(msg)
         f.write(msg+'\n')
-        if arbi_in_bn_to_ub(binance, upbit, 1000, ORDER_TEST):
+        if arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, usd_conv, ORDER_TEST):
             status = 'UB'
 
     if status == 'UB' and kimp<OUT_TH:
         msg = f"time to flight(UB->BN)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
         print(msg)
         f.write(msg+'\n')
-        if arbi_out_ub_to_bn(upbit, binance, 1000, ORDER_TEST):
-            status = 'BN'
+        #if arbi_out_ub_to_bn(binance, upbit, upbit2, asset, maxUSD*usd_conv, usd_conv, ORDER_TEST):
+        status = 'BN'
     
     time.sleep(1)
 

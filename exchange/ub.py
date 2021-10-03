@@ -42,8 +42,8 @@ def ub_get_trade_type(tradeMode):
     print(f"ub_get_trade_type:invalide mode={tradeMode}")
     exit(0)
 
-def ub_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
-    print(f"[ub_spot_{ub_get_trade_type(tradeMode)}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
+def ub_spot_trade(client, pair, tradeMode, t_p, t_q, krwPerUSD, TEST = True):
+    print(f"[ub_spot_{ub_get_trade_type(tradeMode)}]{pair} {t_q}q @ {t_p}W({round(t_p/krwPerUSD,4)}$), TEST={TEST}")
     if TEST:
         return
 
@@ -93,7 +93,8 @@ def ub_withdraw(client2, asset, t_q, addr, tag):
         raise Exception(msg)
 
 def ub_wait_withdraw(client2, uuid):
-    cnt = 0
+    time.sleep(10)
+    cnt = 10
     while True:
         result = client2.Withdraw.Withdraw_info(uuid=uuid)['result']
         #pprint.pprint(result)
@@ -118,6 +119,17 @@ def ub_wait_deposit(client2, txid):
         state = result['state']
         print(f"({cnt})ub_wait_deposit: state={state}")
         if state =='ACCEPTED' or state == 'DONE':
+            break
+        time.sleep(1)
+        cnt = cnt + 1
+
+def ub_wait_order(client, uuid):
+    cnt = 0
+    while True:
+        order = client.get_order(uuid)
+        state = order['state']
+        print(f"({cnt})ub_wait_order: state={state}")
+        if state =='done':
             break
         time.sleep(1)
         cnt = cnt + 1
