@@ -34,13 +34,13 @@ binance = Client(api_key, sec_key)
 # OUT_TH = 2.0
 # IN_TH = 3.5
 status = 'BN'
-OUT_TH = 2.0
-IN_TH = 2.5
+OUT_TH = 2.1
+IN_TH = 2.9
 maxUSD = 50
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
 ORDER_TEST = False
-ARBI_SEQ_TEST = True
+ARBI_SEQ_TEST = False
 
 #init status
 lastMin = None
@@ -54,6 +54,7 @@ def signal_handler(sig, frame):
     f.close()
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
+
 
 if ORDER_TEST:
     print('test order')
@@ -70,39 +71,59 @@ while True:
     now = datetime.now()
     print(now)
     if now.minute != lastMin:
-        usd_conv = float(krw_per_usd()) #fixme: error handling for float version fail
+        krwPerUsd = float(krw_per_usd()) #fixme: error handling for float version fail
         lastMin = now.minute
-        print(f"update usd_conv:{usd_conv} at min:{lastMin}")
+        print(f"update krwPerUsd:{krwPerUsd} at min:{lastMin}")
 
     ub_pair = "KRW-" + asset
     bn_pair = asset + "USDT"
     #print(f"asset:{asset}")
 
-    ub_p_krw = pyupbit.get_current_price(ub_pair)
-    ub_p_usd = round(ub_p_krw / usd_conv, 4)
-    #print(f"[UB]KRW={ub_p_krw}, USD={ub_p_usd}")
+    #get price
+    IN = 0
+    OUT = 1
+    ub_p_krw = [0,0]
+    ub_p_usd = [0,0]
+    bn_p_usd = [0,0]
+    bn_p_krw = [0,0]
+    kimp = [0,0]
 
-    btc_price = binance.get_symbol_ticker(symbol=bn_pair)
-    bn_p_usd = float(btc_price["price"])
-    bn_p_krw = round(bn_p_usd * usd_conv, 4)
-    #print(f"[BN]KRW={bn_p_krw}, USD={bn_p_usd}")
-
-    kimp = round( (ub_p_usd/bn_p_usd -1)*100,2)
-    print(f"KIMP:{kimp}% (UB={ub_p_usd}, BN={bn_p_usd})")
+    if True: #strict
+        bn_p_usd[IN], _  = bn_spot_1st_ask(binance, bn_pair) #market 
+        ub_p_krw[IN], _  = ub_spot_1st_bid(ub_pair)          #market
+        ub_p_krw[OUT], _ = ub_spot_1st_ask(ub_pair)          #market
+        bn_p_usd[OUT], _ = bn_spot_1st_bid(binance, bn_pair) #market 
+    else: #use native api
+        ub_p_krw[IN] = ub_p_krw[OUT] = pyupbit.get_current_price(ub_pair)
+        bn_p_usd[IN] = bn_p_usd[OUT] = binance.get_symbol_ticker(symbol=bn_pair)["price"]
     
-    if status == 'BN' and (kimp>IN_TH or ARBI_SEQ_TEST):
-        msg = f"time to get-in(BN->UB)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
+    #conv currency
+    ub_p_usd[IN]  = round(ub_p_krw[IN] / krwPerUsd, 4)
+    bn_p_krw[IN]  = round(bn_p_usd[IN] * krwPerUsd, 4)
+    ub_p_usd[OUT] = round(ub_p_krw[OUT] / krwPerUsd, 4)
+    bn_p_krw[OUT] = round(bn_p_usd[OUT] * krwPerUsd, 4)
+
+    #print
+    #print(f"[UB]KRW={ub_p_krw}, USD={ub_p_usd}")
+    #print(f"[BN]KRW={bn_p_krw}, USD={bn_p_usd}")
+    kimp[IN]  = round( (ub_p_usd[IN]/bn_p_usd[IN]-1)*100,2)
+    kimp[OUT] = round( (ub_p_usd[OUT]/bn_p_usd[OUT]-1)*100,2)
+    print(f"KIMP[IN] :{kimp[IN] }% (UB={ub_p_usd[IN] }, BN={bn_p_usd[IN] })")
+    print(f"KIMP[OUT]:{kimp[OUT]}% (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}), KIMPDiff:{kimp[IN]-kimp[OUT]}")
+    
+    if status == 'BN' and (kimp[IN]>IN_TH or ARBI_SEQ_TEST):
+        msg = f"time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}"
         print(msg)
         f.write(msg+'\n')
-        if True: #arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, usd_conv, ORDER_TEST):
+        if arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, krwPerUsd, ORDER_TEST):
             cnt = cnt + 1
             status = 'UB'
 
-    elif status == 'UB' and (kimp<OUT_TH or ARBI_SEQ_TEST):
-        msg = f"time to flight(UB->BN)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
+    elif status == 'UB' and (kimp[OUT]<OUT_TH or ARBI_SEQ_TEST):
+        msg = f"time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}"
         print(msg)
         f.write(msg+'\n')
-        if arbi_out_ub_to_bn(binance, upbit, upbit2, asset, maxUSD*usd_conv, usd_conv, ORDER_TEST):
+        if arbi_out_ub_to_bn(binance, upbit, upbit2, asset, maxUSD*krwPerUsd, krwPerUsd, ORDER_TEST):
             cnt = cnt + 1
             status = 'BN'
     

@@ -46,19 +46,13 @@ client = await AsyncClient.create()
 bn_pair = 'EOSUSDT'
 
 days=3
-#days=180
-#yesterday = date.today() - timedelta(365*2-1) #2 years
 yesterday = date.today() - timedelta(days)
-unix_time= yesterday.strftime("%s")
-#print(unix_time)
-from_ts = unix_time
+from_ts = yesterday.strftime("%s")
 
 klines = []
+#KLINE_INTERVAL_1DAY, KLINE_INTERVAL_1HOUR
 async for ohlc in await client.get_historical_klines_generator(bn_pair, AsyncClient.KLINE_INTERVAL_1MINUTE, from_ts):
-#async for ohlc in await client.get_historical_klines_generator(bn_pair, AsyncClient.KLINE_INTERVAL_1DAY, from_ts):
-#async for ohlc in await client.get_historical_klines_generator(bn_pair, AsyncClient.KLINE_INTERVAL_1HOUR, from_ts):
-    #print(f"{bn_utc_to_str(str(ohlc[0]))}:[{ohlc[1]},{ohlc[2]},{ohlc[3]},{ohlc[4]}]")
-    klines.append( [utc_to_str(str(ohlc[0]), True), ohlc[1], ohlc[2], ohlc[3], ohlc[4]] )
+    klines.append([utc_to_str(str(ohlc[0]), True), ohlc[1], ohlc[2], ohlc[3], ohlc[4]])
 df_bn = pd.DataFrame(klines, columns=['ts','o','h','l','c']).set_index('ts')
 #print(df)
 #df.to_csv('BN-'+symbol+'-'+str(days)+'d.csv')
