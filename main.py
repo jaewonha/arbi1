@@ -90,15 +90,15 @@ while True:
     kimp = round( (ub_p_usd/bn_p_usd -1)*100,2)
     print(f"KIMP:{kimp}% (UB={ub_p_usd}, BN={bn_p_usd})")
     
-    if (status == 'BN' and kimp>IN_TH) or ARBI_SEQ_TEST:
+    if status == 'BN' and (kimp>IN_TH or ARBI_SEQ_TEST):
         msg = f"time to get-in(BN->UB)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
         print(msg)
         f.write(msg+'\n')
-        if arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, usd_conv, ORDER_TEST):
+        if True:# arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, usd_conv, ORDER_TEST):
             cnt = cnt + 1
             status = 'UB'
 
-    elif (status == 'UB' and kimp<OUT_TH) or ARBI_SEQ_TEST:
+    elif status == 'UB' and (kimp<OUT_TH or ARBI_SEQ_TEST):
         msg = f"time to flight(UB->BN)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
         print(msg)
         f.write(msg+'\n')
