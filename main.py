@@ -94,7 +94,7 @@ while True:
         msg = f"time to get-in(BN->UB)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
         print(msg)
         f.write(msg+'\n')
-        if True:# arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, usd_conv, ORDER_TEST):
+        if True: #arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, usd_conv, ORDER_TEST):
             cnt = cnt + 1
             status = 'UB'
 

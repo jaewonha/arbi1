@@ -7,17 +7,63 @@ import numpy as np
 import math
 import datetime as dt
 
+import pyupbit
+import asyncio
+import json
+from datetime import datetime, date, timedelta
+from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
+
+
 #from util import move_figure
 from classes.ArbiRange import ArbiRange
 
+def utc_to_str(utc_ts_bn, div1000=False):
+    if div1000:
+        ts = int(utc_ts_bn)/1000
+    else:
+        ts = int(utc_ts_bn)
+    return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    
 #load
 # df_bn = pd.read_csv("./BN-EOSUSDT-180d.csv", index_col=0, parse_dates=True)
 # df_ub = pd.read_csv("./UB-KRW-EOS-180d.csv", index_col=0, parse_dates=True).drop(['volume', 'value'], axis=1)
-df_bn = pd.read_csv("./BN-EOSUSDT-3d-1m-interpolated.csv", index_col=1, parse_dates=True)
-df_ub = pd.read_csv("./UB-KRW-EOS-3d-1m-interpolated.csv", index_col=1, parse_dates=True).drop(['volume', 'value'], axis=1)
+#df_bn = pd.read_csv("./BN-EOSUSDT-3d-1m-interpolated.csv", index_col=1, parse_dates=True)
+#df_ub = pd.read_csv("./UB-KRW-EOS-3d-1m-interpolated.csv", index_col=1, parse_dates=True).drop(['volume', 'value'], axis=1)
 
-df_usd = pd.read_csv("./usd-3day-min_filled.csv", index_col=0, parse_dates=True)
-df_usd['date'] = pd.to_datetime(df_usd['date']); df_usd = df_usd.set_index('date')
+#df_usd = pd.read_csv("./usd-3day-min_filled.csv", index_col=0, parse_dates=True)
+#df_usd['date'] = pd.to_datetime(df_usd['date']); df_usd = df_usd.set_index('date')
+
+day = 3
+df_ub = pyupbit.get_ohlcv("KRW-EOS", count=24*60*day, interval="minute1")
+# df = pyupbit.get_ohlcv("KRW-EOS", count=24*day, interval="minute60")
+#df.to_csv('UB-KRW-EOS-'+str(day)+'d.csv')
+
+ # initialise the client
+#api_key = 'xc88zHqhZjLhTlYLlHRy2k30tKVVEV3oZq2GodtGP8gQloThM2R1KfMMED4goG3c'
+#api_secret = 'xzZ8D5qiSXCIJgirSSbD9fLqVFkjcDIHgms17j1u1SwdklCEClSSjqbRk83ZRmO1'
+#client = Client(api_key, api_secret)
+client = await AsyncClient.create()
+bn_pair = 'EOSUSDT'
+
+days=3
+#days=180
+#yesterday = date.today() - timedelta(365*2-1) #2 years
+yesterday = date.today() - timedelta(days)
+unix_time= yesterday.strftime("%s")
+#print(unix_time)
+from_ts = unix_time
+
+klines = []
+async for ohlc in await client.get_historical_klines_generator(bn_pair, AsyncClient.KLINE_INTERVAL_1MINUTE, from_ts):
+#async for ohlc in await client.get_historical_klines_generator(bn_pair, AsyncClient.KLINE_INTERVAL_1DAY, from_ts):
+#async for ohlc in await client.get_historical_klines_generator(bn_pair, AsyncClient.KLINE_INTERVAL_1HOUR, from_ts):
+    #print(f"{bn_utc_to_str(str(ohlc[0]))}:[{ohlc[1]},{ohlc[2]},{ohlc[3]},{ohlc[4]}]")
+    klines.append( [utc_to_str(str(ohlc[0]), True), ohlc[1], ohlc[2], ohlc[3], ohlc[4]] )
+df_bn = pd.DataFrame(klines, columns=['ts','o','h','l','c']).set_index('ts')
+#print(df)
+#df.to_csv('BN-'+symbol+'-'+str(days)+'d.csv')
+
+
 
 arbiRanges = []
 arbiRanges.append(ArbiRange(pd.datetime(2021, 7,  1), pd.datetime(2021, 7, 25), 3.5,  2.5))

@@ -101,15 +101,15 @@ def arbi_out_ub_to_bn(binance, upbit, upbit2, asset, maxKRW, krwPerUSD, TEST=Tru
     #2a. Spot Buy
     ub_pair = ub_krw_pair(asset)
     t_p, av_q = ub_spot_1st_ask(ub_pair) #market
-    # #t_p, av_q = ub_spot_1st_bid(ub_pair) #wait
-    # # t_p = 5730 #fixed
+    #t_p, av_q = ub_spot_1st_bid(ub_pair) #wait
+    #t_p = 5730 #fixed
     t_q = math.floor(maxKRW/t_p*10)/10
-    #order = ub_spot_trade(upbit, ub_pair, TRADE_BUY, t_p, t_q, krwPerUSD, TEST); #<-
-    #ub_wait_order(upbit, order['uuid']) #<-
+    order = ub_spot_trade(upbit, ub_pair, TRADE_BUY, t_p, t_q, krwPerUSD, TEST); #<-
+    ub_wait_order(upbit, order['uuid']) #<-
 
     # #2b. Futures Short
     f_t_p, f_av_q = bn_fut_1st_bid(binance, bn_pair)
-    #order = bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q, TEST) #<-
+    order = bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q, TEST) #<-
     order = bn_wait_fut_order(binance, bn_pair, order['orderId']) #<-
 
     #### 3. swap exchange ####
