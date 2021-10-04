@@ -17,7 +17,7 @@ FUT_LONG  = 7011
 def bn_get_spot_balance(client, asset, doRound = True):
     #print('### spot balance ###')
     balance = client.get_asset_balance(asset=asset)
-    assert ( balance['asset'] == 'EOS' or balance['asset'] == 'USDT')
+    assert ( balance['asset'] == 'EOS' or balance['asset'] == 'USDT' or balance['asset'] == 'BNB')
     if doRound:
         s_q = math.floor(float(balance['free'])*10)/10 #2자리 미만 안쓰임
     else:
@@ -25,6 +25,15 @@ def bn_get_spot_balance(client, asset, doRound = True):
     #print(f"eos: q={s_q}")
     return s_q
 
+def bn_wait_balance(client, asset, t_q):
+    time.sleep(3)
+    while True:
+        q = bn_get_spot_balance(client, asset)
+        print(f"[bn_wait_balance]{asset}:{q} < {t_q}")
+        if q >= t_q:
+            break
+        time.sleep(1)
+        
 def bn_get_fut_balance(client, asset, _type):
     assert asset == 'EOS'
     EOS_IDX = 67 #fixme: NO IDX or ADD XRP or ETC
@@ -170,15 +179,16 @@ def bn_withdraw(client, asset, addr, tag, t_q):
 def bn_wait_withdraw(client, withdraw_id):
     time.sleep(10)
     cnt = 10
+    txid = None
     while True:
         try:
             withdraw_result = client.get_withdraw_history_id(withdraw_id)
             #pprint.pprint(withdraw_result)
             print(f"({cnt})bn_wait_withdraw: state={withdraw_result['status']}")
-
             if 'txId' in withdraw_result:
-                txid = withdraw_result['txId']
-                print(f"txid{txid}")
+                if txid is None:
+                    txid = withdraw_result['txId']
+                    print(f"txid:{txid}")
             else:
                 _id = withdraw_result['id']
                 #print(f"id{_id}")

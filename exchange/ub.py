@@ -12,7 +12,15 @@ FUT_LONG  = 7011
 
 #func
 def ub_get_spot_balance(client, asset):
-    return client.get_balance(asset)
+    return float(client.get_balance(asset))
+
+def ub_wait_balance(client, asset, t_q):
+    while True:
+        q = ub_get_spot_balance(client, asset)
+        if q >= t_q:
+            break
+        print(f"[ub_wait_balance]{asset} < {t_q}")
+        time.sleep(1)
 
 def ub_krw_pair(asset):
     return 'KRW-' + asset

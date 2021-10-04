@@ -40,6 +40,7 @@ maxUSD = 50
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
 ORDER_TEST = False
+ARBI_SEQ_TEST = True
 
 #init status
 lastMin = None
@@ -89,7 +90,7 @@ while True:
     kimp = round( (ub_p_usd/bn_p_usd -1)*100,2)
     print(f"KIMP:{kimp}% (UB={ub_p_usd}, BN={bn_p_usd})")
     
-    if status == 'BN' and kimp>IN_TH:
+    if (status == 'BN' and kimp>IN_TH) or ARBI_SEQ_TEST:
         msg = f"time to get-in(BN->UB)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
         print(msg)
         f.write(msg+'\n')
@@ -97,7 +98,7 @@ while True:
             cnt = cnt + 1
             status = 'UB'
 
-    if status == 'UB' and kimp<OUT_TH:
+    elif (status == 'UB' and kimp<OUT_TH) or ARBI_SEQ_TEST:
         msg = f"time to flight(UB->BN)! kimp={kimp} (UB={ub_p_usd}, BN={bn_p_usd}) @{now}"
         print(msg)
         f.write(msg+'\n')
@@ -105,7 +106,7 @@ while True:
             cnt = cnt + 1
             status = 'BN'
     
-    if cnt > 5:
+    if cnt > 1:
         exit(0)
     time.sleep(1)
 
