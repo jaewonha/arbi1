@@ -34,8 +34,8 @@ binance = Client(api_key, sec_key)
 # OUT_TH = 2.0
 # IN_TH = 3.5
 status = 'BN'
-OUT_TH = 2.1
-IN_TH = 2.9
+OUT_TH = 2.2
+IN_TH = 2.8
 maxUSD = 50
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
@@ -109,7 +109,7 @@ while True:
     kimp[IN]  = round( (ub_p_usd[IN]/bn_p_usd[IN]-1)*100,2)
     kimp[OUT] = round( (ub_p_usd[OUT]/bn_p_usd[OUT]-1)*100,2)
     print(f"KIMP[IN] :{kimp[IN] }% (UB={ub_p_usd[IN] }, BN={bn_p_usd[IN] })")
-    print(f"KIMP[OUT]:{kimp[OUT]}% (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}), KIMPDiff:{kimp[IN]-kimp[OUT]}")
+    print(f"KIMP[OUT]:{kimp[OUT]}% (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
     if status == 'BN' and (kimp[IN]>IN_TH or ARBI_SEQ_TEST):
         msg = f"time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}"
@@ -127,7 +127,7 @@ while True:
             cnt = cnt + 1
             status = 'BN'
     
-    if cnt > 1:
+    if cnt > 5:
         exit(0)
     time.sleep(1)
 
