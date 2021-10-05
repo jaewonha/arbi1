@@ -101,6 +101,7 @@ while True:
             time.sleep(delay)
         except Exception as e:
             print('[read_market_price] error.. retry:' + e)
+            time.sleep(delay)
     else: #use native api
         ub_p_krw[IN] = ub_p_krw[OUT] = pyupbit.get_current_price(ub_pair)
         bn_p_usd[IN] = bn_p_usd[OUT] = binance.get_symbol_ticker(symbol=bn_pair)["price"]
