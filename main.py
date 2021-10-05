@@ -38,7 +38,7 @@ status = 'BN'
 OUT_TH = 1.0
 IN_TH = 2.0
 IN_TRF_R = 0.85
-maxUSD = 500
+maxUSD = 1000
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
 ORDER_TEST = False
@@ -57,6 +57,14 @@ def signal_handler(sig, frame):
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
+def get_asset_total(binance, upbit, krwPerUsd):
+   bn_usd = bn_get_spot_balance(binance, 'USDT')
+   ub_usd = ub_get_spot_balance(upbit, 'KRW')*krwPerUsd
+   total_usd = bn_usd + ub_usd
+   return [bn_usd, ub_usd, total_usd]
+
+def print_arbi_stat(before, after, th, f):
+    print(f"[total_asset]ub/bn: ({before[0]}/{before[1]})->({after[0]}/{after[1]})={round(after[2]/before[2]*100-th,2)}", file=f)
 
 if ORDER_TEST:
     print('test order')
@@ -82,6 +90,12 @@ while True:
     ub_pair = "KRW-" + asset
     bn_pair = asset + "USDT"
     #print(f"asset:{asset}")
+
+    asset_before = get_asset_total(binance, upbit, krwPerUsd)
+    asset_after  = get_asset_total(binance, upbit, krwPerUsd)
+    print_arbi_stat(asset_before, asset_after, +IN_TH)
+    print_arbi_stat(asset_before, asset_after, -OUT_TH)
+    exit(0)
 
     #get price
     IN = 0
@@ -123,20 +137,22 @@ while True:
     print(f"KIMP[OUT]:{kimp[OUT]}% (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
     if status == 'BN' and (kimp[IN]>(IN_TH*IN_TRF_R) or ARBI_SEQ_TEST):
-        msg = f"time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}"
-        print(msg)
-        f.write(msg+'\n')
+        print(f"time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}", file=f)
+        asset_before = get_asset_total(binance, upbit, krwPerUsd)
         if arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, krwPerUsd, IN_TH, ORDER_TEST):
             cnt = cnt + 1
             status = 'UB'
+            asset_after = get_asset_total(binance, upbit, krwPerUsd)
+            print_arbi_stat(asset_before, asset_after, +IN_TH, f)
 
     elif status == 'UB' and (kimp[OUT]<OUT_TH or ARBI_SEQ_TEST):
-        msg = f"time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}"
-        print(msg)
-        f.write(msg+'\n')
+        print(f"time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}", file=f)
+        asset_before = get_asset_total(binance, upbit, krwPerUsd)
         if arbi_out_ub_to_bn(binance, upbit, upbit2, asset, maxUSD*krwPerUsd, krwPerUsd, ORDER_TEST):
             cnt = cnt + 1
             status = 'BN'
+            asset_after = get_asset_total(binance, upbit, krwPerUsd)
+            print_arbi_stat(asset_before, asset_after, -OUT_TH, f)
     
     if cnt > 5:
         exit(0)
