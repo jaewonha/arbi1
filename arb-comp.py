@@ -10,8 +10,11 @@ import datetime as dt
 import pyupbit
 import asyncio
 import json
+
 from datetime import datetime, date, timedelta
-from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
+
+from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
+from conv.krw2usd import krw_per_usd
 
 
 #from util import move_figure
@@ -33,39 +36,92 @@ def utc_to_str(utc_ts_bn, div1000=False):
 #df_usd = pd.read_csv("./usd-3day-min_filled.csv", index_col=0, parse_dates=True)
 #df_usd['date'] = pd.to_datetime(df_usd['date']); df_usd = df_usd.set_index('date')
 
-day = 3
-df_ub = pyupbit.get_ohlcv("KRW-EOS", count=24*60*day, interval="minute1")
-# df = pyupbit.get_ohlcv("KRW-EOS", count=24*day, interval="minute60")
-#df.to_csv('UB-KRW-EOS-'+str(day)+'d.csv')
-
- # initialise the client
-#api_key = 'xc88zHqhZjLhTlYLlHRy2k30tKVVEV3oZq2GodtGP8gQloThM2R1KfMMED4goG3c'
-#api_secret = 'xzZ8D5qiSXCIJgirSSbD9fLqVFkjcDIHgms17j1u1SwdklCEClSSjqbRk83ZRmO1'
-#client = Client(api_key, api_secret)
-client = await AsyncClient.create()
+days = 1
 bn_pair = 'EOSUSDT'
 
-days=3
-yesterday = date.today() - timedelta(days)
-from_ts = yesterday.strftime("%s")
+krwPerUsd = krw_per_usd()
+# initialise the client
+if False:
+    client = Client()
 
-klines = []
-#KLINE_INTERVAL_1DAY, KLINE_INTERVAL_1HOUR
-async for ohlc in await client.get_historical_klines_generator(bn_pair, AsyncClient.KLINE_INTERVAL_1MINUTE, from_ts):
-    klines.append([utc_to_str(str(ohlc[0]), True), ohlc[1], ohlc[2], ohlc[3], ohlc[4]])
-df_bn = pd.DataFrame(klines, columns=['ts','o','h','l','c']).set_index('ts')
-#print(df)
-#df.to_csv('BN-'+symbol+'-'+str(days)+'d.csv')
+    yesterday = date.today() - timedelta(days)
+    from_ts = yesterday.strftime("%s")
 
+    klines = []
+    #KLINE_INTERVAL_1DAY, KLINE_INTERVAL_1HOUR
+    klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1MINUTE, from_ts)
+    #klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1HOUR, from_ts)
+    klines2 = np.delete(klines, range(5,12), axis=1)
+
+    
+    for i in range(0, len(klines2)):
+        klines2[i][0] = utc_to_str(klines2[i][0], True)
+        #for j in range(1, len(klines2[i])):
+            #klines2[i][j] = round(float(klines2[i][j])*krwPerUsd, 1)
+
+    df_bn = pd.DataFrame(klines2, columns=['ts','open','high','low','close']).set_index('ts')
+    #print(df)
+    #df.to_csv('BN-'+symbol+'-'+str(days)+'d.csv')
+
+    df_ub = pyupbit.get_ohlcv("KRW-EOS", count=24*60*days, interval="minute1")
+    #df_ub = pyupbit.get_ohlcv("KRW-EOS", count=24*days, interval="minute60")
+    #df.to_csv('UB-KRW-EOS-'+str(days)+'d.csv')
+
+
+    df_ub.drop(columns=['volume','value'], axis=1, inplace=True)
+    df_ub.reset_index(inplace=True)
+    df_bn.reset_index(inplace=True)
+
+    df_ub.rename({'index':'ts'}, axis=1, inplace=True)
+    df_bn.rename({0:'ts'}, axis=1, inplace=True)
+
+    df_bn['ts'] = df_bn['ts'].values.astype(dtype='datetime64[ns]')
+
+    df_ub.sort_values(by='ts', ascending=True, inplace=True)
+    df_bn.sort_values(by='ts', ascending=True, inplace=True)
+
+    print(df_ub.head())
+    print(df_bn.head())
+
+    df_join = pd.merge(df_bn, df_ub, left_on='ts', right_on='ts', how='outer').dropna().reset_index().drop(columns=['index'], axis=1)
+    print(df_join.head())
+
+    df_join.to_csv('df_join-'+str(days)+'d.csv')
+
+df_join = pd.read_csv('df_join-'+str(days)+'d.csv', index_col=0, parse_dates=True) 
+df_join['ts'] = pd.to_datetime(df_join['ts'])
+
+print(df_join.head())
+df_ub = pd.DataFrame()
+df_bn = pd.DataFrame()
+
+df_ub.index = df_join.index
+df_ub['ts'] = df_join['ts']
+df_ub['open'] = df_join['open_y']
+df_ub['high'] = df_join['high_y']
+df_ub['low'] = df_join['low_y']
+df_ub['close'] = df_join['close_y']
+df_ub.set_index('ts', inplace=True)
+
+df_bn.index = df_join.index
+df_bn['ts'] = df_join['ts']
+df_bn['open'] = df_join['open_x']
+df_bn['high'] = df_join['high_x']
+df_bn['low'] = df_join['low_x']
+df_bn['close'] = df_join['close_x']
+df_bn.set_index('ts', inplace=True)
+
+df_usd = pd.DataFrame(df_bn, copy=True)
+df_usd['open'] = df_usd['high'] = df_usd['low'] = df_usd['close'] = krwPerUsd
 
 
 arbiRanges = []
-arbiRanges.append(ArbiRange(pd.datetime(2021, 7,  1), pd.datetime(2021, 7, 25), 3.5,  2.5))
-arbiRanges.append(ArbiRange(pd.datetime(2021, 7, 26), pd.datetime(2021, 9,  6), 0.6, -0.3))
-arbiRanges.append(ArbiRange(pd.datetime(2021, 9,  7), pd.datetime(2021, 9, 26), 3.5,  2.5))
-#arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 27), pd.datetime(2021, 9, 30), 3.4,  2.8))
-arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 29), pd.datetime(2021, 10, 5), 3.0,  2.3))
-
+# arbiRanges.append(ArbiRange(pd.datetime(2021, 7,  1), pd.datetime(2021, 7, 25), 3.5,  2.5))
+# arbiRanges.append(ArbiRange(pd.datetime(2021, 7, 26), pd.datetime(2021, 9,  6), 0.6, -0.3))
+# arbiRanges.append(ArbiRange(pd.datetime(2021, 9,  7), pd.datetime(2021, 9, 26), 3.5,  2.5))
+# #arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 27), pd.datetime(2021, 9, 30), 3.4,  2.8))
+# arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 29), pd.datetime(2021, 10, 5), 3.0,  2.3))
+arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 3), pd.datetime(2021, 10, 5), 2.8,  2.1))
 
 # lastIdx = 0
 # while True:
@@ -85,7 +141,7 @@ arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 29), pd.datetime(2021, 10, 5), 
 # exit(0)
 
 #crop range
-if True:
+if False:
     #8/1~9/7
     # range_start = pd.datetime(2021, 7, 1)
     # range_end = pd.datetime(2021, 9, 20)
@@ -194,15 +250,16 @@ for i in range(1,len(kimp)):
 # line_x = np.linspace(n_kimp[0], n_kimp[len(n_kimp)-1], len(n_kimp))
 # plt.plot(line_x, np.linspace(IN_TH , IN_TH , len(n_kimp)))
 # plt.plot(line_x, np.linspace(OUT_TH, OUT_TH, len(n_kimp)))
-days = float((kimp.index[-1]-kimp.index[0]).days)
+secs = float((kimp.index[-1]-kimp.index[0]).total_seconds())
 
 for r in arbiRanges:
     plt.axhline(y=r.inTh , color='r', linestyle='-', 
-        xmin=(r.dateStart-kimp.index[0]).days/days,
-        xmax=(r.dateEnd  -kimp.index[0]).days/days)
+        xmin=(r.dateStart-kimp.index[0]).total_seconds()/secs,
+        xmax=(r.dateEnd  -kimp.index[0]).total_seconds()/secs)
     plt.axhline(y=r.outTh, color='b', linestyle='-',
-        xmin=(r.dateStart-kimp.index[0]).days/days,
-        xmax=(r.dateEnd  -kimp.index[0]).days/days)
+        xmin=(r.dateStart-kimp.index[0]).total_seconds()/secs,
+        xmax=(r.dateEnd  -kimp.index[0]).total_seconds()/secs)
+
 
 ## gain calc
 _balance=balance
@@ -211,7 +268,7 @@ gain = 0
 #fee
 up_fee = 0.0005
 bn_fee = 0.001
-bn_fut_fee = 0.0002
+bn_fut_fee = 0.0004
 for i in range(1,len(tss)):
     a = actions[i]
     ts = tss[i]
@@ -230,6 +287,9 @@ for i in range(1,len(tss)):
 
             ## change exchange in 5min..
             #BN: spot sell
+            if ts+5 >= len(df_bn):
+                print('end reached')
+                break
             t_p2 = float(df_bn.iloc[ts+5]['close'])
             spotSell = t_p2 * t_q * (1-bn_fee) #fee 0.1#
             spotGain = spotSell - spotBuy
@@ -292,6 +352,7 @@ for i in range(1,len(tss)):
         print(f"[{date}]:({selRanges[i]}):{'IN ' if a == IN else 'OUT'} at {v} => {gain}")
 
 gain = (balance/_balance - 1)*100
+days = 60*60*24 / float(secs)
 print(f"total gain%:{gain}")
 print(f"days:{days}")
 print(f"APR%:{round(gain/days*365.0,2)}")
