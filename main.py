@@ -37,7 +37,7 @@ status = 'BN'
 #status = 'UB' #resume 00:00 10/15
 OUT_TH = 1.0
 IN_TH = 2.0
-IN_TRF_R = 0.8
+IN_TRF_R = 0.85
 maxUSD = 500
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
