@@ -3,7 +3,7 @@ from pyupbit import WebSocketManager
 from upbit.client import Upbit
 
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, ReadTimeout
 
 import json
 import pprint
@@ -33,7 +33,8 @@ binance = Client(api_key, sec_key)
 # status = 'UB'
 # OUT_TH = 2.0
 # IN_TH = 3.5
-status = 'BN'
+#status = 'BN'
+status = 'UB' #resume 00:00 10/15
 OUT_TH = 2.2
 IN_TH = 2.8
 maxUSD = 50
@@ -67,6 +68,7 @@ else:
         exit(0)
 
 cnt = 0
+delay = 2
 while True:
     now = datetime.now()
     print(now)
@@ -89,10 +91,16 @@ while True:
     kimp = [0,0]
 
     if True: #strict
-        bn_p_usd[IN], _  = bn_spot_1st_ask(binance, bn_pair) #market 
-        ub_p_krw[IN], _  = ub_spot_1st_bid(ub_pair)          #market
-        ub_p_krw[OUT], _ = ub_spot_1st_ask(ub_pair)          #market
-        bn_p_usd[OUT], _ = bn_spot_1st_bid(binance, bn_pair) #market 
+        try:
+            bn_p_usd[IN], _  = bn_spot_1st_ask(binance, bn_pair) #market 
+            ub_p_krw[IN], _  = ub_spot_1st_bid(ub_pair)          #market
+            ub_p_krw[OUT], _ = ub_spot_1st_ask(ub_pair)          #market
+            bn_p_usd[OUT], _ = bn_spot_1st_bid(binance, bn_pair) #market 
+        except ReadTimeout as rt:
+            print('[read_market_price] read time out.. retry')
+            time.sleep(delay)
+        except Exception as e:
+            print('[read_market_price] error.. retry:' + e)
     else: #use native api
         ub_p_krw[IN] = ub_p_krw[OUT] = pyupbit.get_current_price(ub_pair)
         bn_p_usd[IN] = bn_p_usd[OUT] = binance.get_symbol_ticker(symbol=bn_pair)["price"]
@@ -129,6 +137,6 @@ while True:
     
     if cnt > 5:
         exit(0)
-    time.sleep(1)
+    time.sleep(delay)
 
 
