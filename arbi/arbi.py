@@ -26,7 +26,21 @@ def check_fee_bnb(binance, maxUSD):
     return True
     
 
-def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, krwPerUSD, TEST= True):
+def wait_kimp_inTh(binance, bn_pair, ub_pair, krwPerUsd, inTh):
+    cnt = 0
+    while True:
+        bn_p_usd, _  = bn_spot_1st_ask(binance, bn_pair) #market 
+        ub_p_krw, _  = ub_spot_1st_bid(ub_pair)          #market
+        ub_p_usd  = round(ub_p_krw / krwPerUsd, 4)
+        kimp  = round( (ub_p_usd/bn_p_usd-1)*100,2)
+        print(f"[wait_kimp_inTh]({cnt}) kimp({kimp}) > inTh({inTh}) ?")
+        if kimp > inTh:
+            break
+        cnt = cnt + 1
+        time.sleep(1)
+            
+
+def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, krwPerUSD, inTh, TEST= True):
     assert check_fee_bnb(binance, maxUSD)
 
     balUSDT = bn_get_spot_balance(binance, 'USDT')
@@ -43,12 +57,13 @@ def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, krwPerUSD, TEST= Tru
     t_p, av_q = bn_spot_1st_ask(binance, bn_pair) #market <-
     # #t_p, av_q = bn_spot_1st_bid(binance, bn_pair) #wait
     t_q = math.floor(maxUSD/t_p*10)/10 #spot 4, future 1 #<-
+    t_q_fee = round(t_q-fee, 1)
     order = bn_spot_trade(binance, bn_pair, TRADE_BUY, t_p, t_q, TEST) #<-
     bn_wait_order(binance, bn_pair, order['orderId']) #<-
     
     # #2b. Futures Short
     f_t_p, f_av_q = bn_fut_1st_bid(binance, bn_pair)
-    order = bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q-fee, TEST) #<-
+    order = bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q_fee, TEST) #<-
     bn_wait_fut_order(binance, bn_pair, order['orderId']) #<-
     
     
@@ -75,12 +90,15 @@ def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, krwPerUSD, TEST= Tru
     #### 4. Sell & UnHedge ####
     #4a. Spot Sell
     ub_pair = ub_krw_pair(asset)
+
+    wait_kimp_inTh(binance, bn_pair, ub_pair, krwPerUSD, inTh) #ensure target kimp is maintained
+
     t_p, av_q = ub_spot_1st_bid(ub_pair)
-    ub_spot_trade(upbit, ub_pair, TRADE_SELL, t_p, t_q-fee, krwPerUSD, TEST)
+    ub_spot_trade(upbit, ub_pair, TRADE_SELL, t_p, t_q_fee, krwPerUSD, TEST)
 
     #4b. Futures Long
     f_t_p, f_av_q = bn_fut_1st_ask(binance, bn_pair)
-    bn_fut_trade(binance, bn_pair, TRADE_BUY, f_t_p, t_q-fee, TEST)
+    bn_fut_trade(binance, bn_pair, TRADE_BUY, f_t_p, t_q_fee, TEST)
 
     return True
     

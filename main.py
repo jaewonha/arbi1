@@ -33,11 +33,12 @@ binance = Client(api_key, sec_key)
 # status = 'UB'
 # OUT_TH = 2.0
 # IN_TH = 3.5
-#status = 'BN'
-status = 'UB' #resume 00:00 10/15
-OUT_TH = 2.2
-IN_TH = 2.8
-maxUSD = 50
+status = 'BN'
+#status = 'UB' #resume 00:00 10/15
+OUT_TH = 1.0
+IN_TH = 2.0
+IN_TRF_R = 0.8
+maxUSD = 500
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
 ORDER_TEST = False
@@ -66,6 +67,7 @@ else:
     else:
         print('not go')
         exit(0)
+
 
 cnt = 0
 delay = 2
@@ -120,11 +122,11 @@ while True:
     print(f"KIMP[IN] :{kimp[IN] }% (UB={ub_p_usd[IN] }, BN={bn_p_usd[IN] })")
     print(f"KIMP[OUT]:{kimp[OUT]}% (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
-    if status == 'BN' and (kimp[IN]>IN_TH or ARBI_SEQ_TEST):
+    if status == 'BN' and (kimp[IN]>(IN_TH*IN_TRF_R) or ARBI_SEQ_TEST):
         msg = f"time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}"
         print(msg)
         f.write(msg+'\n')
-        if arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, krwPerUsd, ORDER_TEST):
+        if arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, krwPerUsd, IN_TH, ORDER_TEST):
             cnt = cnt + 1
             status = 'UB'
 
