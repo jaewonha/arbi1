@@ -165,8 +165,8 @@ def bn_wait_deposit(client, asset, txid):
                 pass
             elif state == 1: #success
                 return
-        time.sleep(1)
-        cnt = cnt + 1
+        time.sleep(3)
+        cnt = cnt + 3
 
 def bn_withdraw(client, asset, addr, tag, t_q):
     withdraw = client.withdraw(
@@ -209,8 +209,8 @@ def bn_wait_withdraw(client, withdraw_id):
                 return txid
         except ConnectionError as ce:
             print('consume connection error')
-        time.sleep(1)
-        cnt = cnt + 1
+        time.sleep(3)
+        cnt = cnt + 3
 
 def bn_wait_order(binance, pair, orderId):
     cnt = 0

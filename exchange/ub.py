@@ -112,8 +112,8 @@ def ub_wait_withdraw(client2, uuid):
         print(f"({cnt})ub_wait_withdraw: state={state}")
         if state == 'DONE':
             return txid
-        time.sleep(1)
-        cnt = cnt + 1
+        time.sleep(3)
+        cnt = cnt + 3
 
 def ub_wait_deposit(client2, txid):
     cnt = 0
@@ -128,8 +128,8 @@ def ub_wait_deposit(client2, txid):
         print(f"({cnt})ub_wait_deposit: state={state}")
         if state =='ACCEPTED' or state == 'DONE':
             break
-        time.sleep(1)
-        cnt = cnt + 1
+        time.sleep(3)
+        cnt = cnt + 3
 
 def ub_wait_order(client, uuid):
     cnt = 0
