@@ -37,7 +37,7 @@ binance = Client(api_key, sec_key)
 status = 'UB' 
 OUT_TH = 1.0
 IN_TH = 2.0
-IN_TRF_R = 0.85
+IN_TRF_R = 0.9
 maxUSD = 500
 #maxUSD = 1000
 asset = "EOS" #target asset to trade arbi
@@ -70,9 +70,10 @@ def log(msg, f):
 
 def print_arbi_stat(before, after, th, f):
     ratio = round(after[2]/before[2],4)
-    k_gain = ratio*100 -1.0 - th
+    k_gain = (ratio-1.0)*100 - th
     msg = f"[total_asset]ub/bn: [{before[0]} + {before[1]} = {before[2]}] -> ({after[0]} + {after[1]} = {after[2]}), ratio={ratio}, th={th}, k_gain={k_gain}"
     log(msg, f)
+    f.flush()
 
 if ORDER_TEST:
     print('test order')
