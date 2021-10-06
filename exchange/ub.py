@@ -62,7 +62,7 @@ def ub_spot_trade(client, pair, tradeMode, t_p, t_q, krwPerUSD, TEST = True):
     else:
         print(f"ub_get_trade_type:invalide mode={tradeMode}")
         exit(0)
-        
+'''        
 def ub_wait_order(client, order, TEST):
     if TEST:
         return
@@ -80,7 +80,7 @@ def ub_wait_order(client, order, TEST):
         #fixme: rest of error case check
 
         time.sleep(1)
-
+'''
 def ub_withdraw(client2, asset, t_q, addr, tag):
     print(f"ub_withdraw:{asset} {t_q}q to {addr} with {tag}")
     try:
@@ -97,7 +97,6 @@ def ub_withdraw(client2, asset, t_q, addr, tag):
         return uuid
     except Exception as e:
         msg = result['error']['message']
-        print(msg)
         raise Exception(msg)
 
 def ub_wait_withdraw(client2, uuid):
@@ -134,10 +133,13 @@ def ub_wait_deposit(client2, txid):
 def ub_wait_order(client, uuid):
     cnt = 0
     while True:
-        order = client.get_order(uuid)
-        state = order['state']
-        print(f"({cnt})ub_wait_order: state={state}")
-        if state =='done':
-            break
+        try:
+            order = client.get_order(uuid)
+            state = order['state']
+            print(f"({cnt})ub_wait_order: state={state}")
+            if state =='done': #!fxme: handle rejected?
+                break
+        except Exception as e:
+            print("error", order)
         time.sleep(1)
         cnt = cnt + 1

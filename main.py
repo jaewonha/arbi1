@@ -33,13 +33,13 @@ binance = Client(api_key, sec_key)
 # status = 'UB'
 # OUT_TH = 2.0
 # IN_TH = 3.5
-status = 'BN'
-#status = 'UB' 
+#status = 'BN'
+status = 'UB' 
 OUT_TH = 1.0
 IN_TH = 2.0
 IN_TRF_R = 0.9
-#maxUSD = 500
-maxUSD = 1000
+maxUSD = 500
+#maxUSD = 1000
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
 ORDER_TEST = False
@@ -49,7 +49,8 @@ ARBI_SEQ_TEST = False
 lastMin = None
 
 date = datetime.now().strftime("%Y%m%d_%H%M%S")
-f = open(f"kimp{date}.txt", "a")
+#f = open(f"kimp{date}.txt", "a")
+f = open(f"log.txt", "a")
 
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
@@ -59,19 +60,23 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 def get_asset_total(binance, upbit, krwPerUsd):
-   bn_usd = round(bn_get_spot_balance(binance, 'USDT'), 2)
-   ub_usd = round(ub_get_spot_balance(upbit, 'KRW')/krwPerUsd, 2)
-   total_usd = bn_usd + ub_usd
-   return [bn_usd, ub_usd, total_usd]
+   ub_usd = ub_get_spot_balance(upbit, 'KRW') / krwPerUsd
+   bn_usd = bn_get_spot_balance(binance, 'USDT')
+   total_usd = ub_usd + bn_usd
+   return [round(ub_usd,2), round(bn_usd,2), round(total_usd,2)]
 
 def log(msg, f):
     print(msg)
     print(msg, file=f)
 
-def print_arbi_stat(before, after, th, f):
-    ratio = round(after[2]/before[2],4)
-    k_gain = (ratio-1.0)*100 - th
-    msg = f"[total_asset]ub/bn: [{before[0]} + {before[1]} = {before[2]}] -> ({after[0]} + {after[1]} = {after[2]}), ratio={ratio}, th={th}, k_gain={k_gain}"
+def print_arbi_stat(before, after, th, maxUSD, krwPerUsd, f):
+    assetGain = round( (after[2]/before[2]-1)*100, 2 )
+
+    diff = after[2] - before[2]
+    actualKimp = round((diff/maxUSD)*100, 2)
+    kimpGain = round(actualKimp-th, 2)
+
+    msg = f"[total_asset]ub/bn: [{before[0]} + {before[1]} = {before[2]}] -> ({after[0]} + {after[1]} = {after[2]}), diff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}"
     log(msg, f)
     f.flush()
 
@@ -89,11 +94,11 @@ cnt = 0
 delay = 2
 while True:
     now = datetime.now()
-    print(now)
+    log(now, f)
     if now.minute != lastMin:
         krwPerUsd = float(krw_per_usd()) #fixme: error handling for float version fail
         lastMin = now.minute
-        log(f"update krwPerUsd:{krwPerUsd} at min:{lastMin}", f)
+        print(f"update krwPerUsd:{krwPerUsd} at min:{lastMin}")
         f.flush()
 
     ub_pair = "KRW-" + asset
@@ -155,7 +160,7 @@ while True:
             cnt = cnt + 1
             status = 'UB'
             asset_after = get_asset_total(binance, upbit, krwPerUsd)
-            print_arbi_stat(asset_before, asset_after, +IN_TH, f)
+            print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, krwPerUsd, f)
 
     elif status == 'UB' and (kimp[OUT]<OUT_TH or ARBI_SEQ_TEST):
         log(f"time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}", f)
@@ -164,7 +169,7 @@ while True:
             cnt = cnt + 1
             status = 'BN'
             asset_after = get_asset_total(binance, upbit, krwPerUsd)
-            print_arbi_stat(asset_before, asset_after, -OUT_TH, f)
+            print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, krwPerUsd, f)
     
     if cnt > 5:
         exit(0)

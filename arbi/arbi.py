@@ -94,11 +94,14 @@ def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, maxUSD, krwPerUSD, inTh, TES
     wait_kimp_inTh(binance, bn_pair, ub_pair, krwPerUSD, inTh) #ensure target kimp is maintained
 
     t_p, av_q = ub_spot_1st_bid(ub_pair)
-    ub_spot_trade(upbit, ub_pair, TRADE_SELL, t_p, t_q_fee, krwPerUSD, TEST)
+    ub_order = ub_spot_trade(upbit, ub_pair, TRADE_SELL, t_p, t_q_fee, krwPerUSD, TEST)
 
     #4b. Futures Long
     f_t_p, f_av_q = bn_fut_1st_ask(binance, bn_pair)
-    bn_fut_trade(binance, bn_pair, TRADE_BUY, f_t_p, t_q_fee, TEST)
+    bn_order = bn_fut_trade(binance, bn_pair, TRADE_BUY, f_t_p, t_q_fee, TEST)
+
+    ub_wait_order(upbit, ub_order['uuid'])
+    bn_wait_fut_order(binance, bn_pair, bn_order['orderId'])
 
     return True
     
@@ -128,7 +131,7 @@ def arbi_out_ub_to_bn(binance, upbit, upbit2, asset, maxKRW, krwPerUSD, TEST=Tru
     # #2b. Futures Short
     f_t_p, f_av_q = bn_fut_1st_bid(binance, bn_pair)
     order = bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q, TEST) #<-
-    order = bn_wait_fut_order(binance, bn_pair, order['orderId']) #<-
+    bn_wait_fut_order(binance, bn_pair, order['orderId']) #<-
 
     #### 3. swap exchange ####
     #3a. withdraw
