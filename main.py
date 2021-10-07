@@ -34,10 +34,10 @@ binance = Client(api_key, sec_key)
 # status = 'UB'
 # OUT_TH = 2.0
 # IN_TH = 3.5
-status = 'BN'
+status = 'UB'
 #status = 'UB' 
-OUT_TH = 0.7
-IN_TH = 1.8
+OUT_TH = 2.0
+IN_TH = 3.0
 IN_TRF_R = 0.9
 maxUSD = 50
 #maxUSD = 1000
@@ -160,7 +160,7 @@ while True:
     elif status == 'UB' and (kimp[OUT]<OUT_TH or ARBI_SEQ_TEST):
         log(f"time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}")
         asset_before = get_asset_total(binance, upbit, krwPerUsd)
-        if arbi_out_ub_to_bn(binance, upbit, upbit2, asset, ub_p_krw[OUT], bn_p_usd[OUT], maxUSD*krwPerUsd, krwPerUsd, OUT_TH, ORDER_TEST):
+        if arbi_out_ub_to_bn(binance, upbit, upbit2, asset, ub_p_krw[OUT], bn_p_usd[OUT], maxUSD*krwPerUsd, krwPerUsd, ORDER_TEST):
             cnt = cnt + 1
             status = 'BN'
             asset_after = get_asset_total(binance, upbit, krwPerUsd)
