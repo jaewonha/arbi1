@@ -5,6 +5,7 @@ from binance.exceptions import BinanceAPIException, BinanceOrderException
 #from binance import Client, AsyncClient, DepthCacheManager, BinanceSocketManager
 import time
 import math
+from util.log import log
 
 #const
 TRADE_BUY = 6010
@@ -91,7 +92,7 @@ def bn_get_trade_type(tradeMode):
 
 def bn_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
     tradeType = bn_get_trade_type(tradeMode)
-    print(f"[bn_spot_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
+    log(f"[bn_spot_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
     if TEST:
         return client.create_test_order(
             symbol=pair,
@@ -111,7 +112,7 @@ def bn_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
 
 def bn_fut_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
     tradeType = bn_get_trade_type(tradeMode)
-    print(f"[bn_fut_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
+    log(f"[bn_fut_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
     if TEST:
         return client.create_test_order(
             symbol=pair,

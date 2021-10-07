@@ -16,6 +16,7 @@ import sys
 
 from conv.krw2usd import krw_per_usd
 from arbi.arbi import *
+from util.log import *
 
 #init
 #UB - tradable
@@ -48,7 +49,7 @@ ARBI_SEQ_TEST = False
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
     print('closing file')
-    f.close()
+    log_close()
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -58,25 +59,20 @@ def get_asset_total(binance, upbit, krwPerUsd):
    total_usd = ub_usd + bn_usd
    return [round(ub_usd,2), round(bn_usd,2), round(total_usd,2)]
 
-def log(msg, f):
-    print(msg)
-    print(msg, file=f)
-
-def print_arbi_stat(before, after, th, maxUSD, krwPerUsd, f):
+def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
     assetGain = round( (after[2]/before[2]-1)*100, 2 )
 
     diff = round(after[2] - before[2],2)
     actualKimp = round((diff/maxUSD)*100, 2)
     kimpGain = round(actualKimp-th, 2)
 
-    msg = f"[total_asset]ub/bn: [{before[0]} + {before[1]} = {before[2]}] -> ({after[0]} + {after[1]} = {after[2]}), diff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}"
-    log(msg, f)
-    f.flush()
+    log(f"[total_asset]ub/bn: [{before[0]} + {before[1]} = {before[2]}] -> ({after[0]} + {after[1]} = {after[2]}), diff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}")
+    log_flush()
 
 date = datetime.now().strftime("%Y%m%d_%H%M%S")
 #f = open(f"kimp{date}.txt", "a")
-f = open(f"log.txt", "a")
-log(date, f)
+log_open("log.txt")
+log(date)
 
 if ORDER_TEST:
     print('test order')
@@ -98,7 +94,7 @@ while True:
         krwPerUsd = float(krw_per_usd()) #fixme: error handling for float version fail
         lastMin = now.minute
         print(f"update krwPerUsd:{krwPerUsd} at min:{lastMin}")
-        f.flush()
+        log_flush()
 
     ub_pair = "KRW-" + asset
     bn_pair = asset + "USDT"
@@ -153,22 +149,22 @@ while True:
     print(f"KIMP[OUT]:{kimp[OUT]}% (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
     if status == 'BN' and (kimp[IN]>(IN_TH*IN_TRF_R) or ARBI_SEQ_TEST):
-        log(f"time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}", f)
+        log(f"time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}")
         asset_before = get_asset_total(binance, upbit, krwPerUsd)
         if arbi_in_bn_to_ub(binance, upbit, upbit2, asset, bn_p_usd[IN], maxUSD, krwPerUsd, IN_TH, ORDER_TEST):
             cnt = cnt + 1
             status = 'UB'
             asset_after = get_asset_total(binance, upbit, krwPerUsd)
-            print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, krwPerUsd, f)
+            print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, krwPerUsd)
 
     elif status == 'UB' and (kimp[OUT]<OUT_TH or ARBI_SEQ_TEST):
-        log(f"time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}", f)
+        log(f"time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}")
         asset_before = get_asset_total(binance, upbit, krwPerUsd)
         if arbi_out_ub_to_bn(binance, upbit, upbit2, asset, ub_p_krw[OUT], bn_p_usd[OUT], maxUSD*krwPerUsd, krwPerUsd, OUT_TH, ORDER_TEST):
             cnt = cnt + 1
             status = 'BN'
             asset_after = get_asset_total(binance, upbit, krwPerUsd)
-            print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, krwPerUsd, f)
+            print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, krwPerUsd)
     
     if cnt > 5:
         exit(0)

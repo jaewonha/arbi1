@@ -1,6 +1,7 @@
 import pyupbit
 import time
 import pprint
+from util.log import log
 
 #const
 TRADE_BUY = 6010
@@ -51,7 +52,7 @@ def ub_get_trade_type(tradeMode):
     exit(0)
 
 def ub_spot_trade(client, pair, tradeMode, t_p, t_q, krwPerUSD, TEST = True):
-    print(f"[ub_spot_{ub_get_trade_type(tradeMode)}]{pair} {t_q}q @ {t_p}W({round(t_p/krwPerUSD,4)}$), TEST={TEST}")
+    log(f"[ub_spot_{ub_get_trade_type(tradeMode)}]{pair} {t_q}q @ {t_p}W({round(t_p/krwPerUSD,4)}$), TEST={TEST}")
     if TEST:
         return
 
