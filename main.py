@@ -35,22 +35,15 @@ binance = Client(api_key, sec_key)
 # IN_TH = 3.5
 #status = 'BN'
 status = 'UB' 
-OUT_TH = 1.0
+OUT_TH = 0.7
 IN_TH = 2.0
 IN_TRF_R = 0.9
-maxUSD = 500
+maxUSD = 3000
 #maxUSD = 1000
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
 ORDER_TEST = False
 ARBI_SEQ_TEST = False
-
-#init status
-lastMin = None
-
-date = datetime.now().strftime("%Y%m%d_%H%M%S")
-#f = open(f"kimp{date}.txt", "a")
-f = open(f"log.txt", "a")
 
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
@@ -72,13 +65,18 @@ def log(msg, f):
 def print_arbi_stat(before, after, th, maxUSD, krwPerUsd, f):
     assetGain = round( (after[2]/before[2]-1)*100, 2 )
 
-    diff = after[2] - before[2]
+    diff = round(after[2] - before[2],2)
     actualKimp = round((diff/maxUSD)*100, 2)
     kimpGain = round(actualKimp-th, 2)
 
     msg = f"[total_asset]ub/bn: [{before[0]} + {before[1]} = {before[2]}] -> ({after[0]} + {after[1]} = {after[2]}), diff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}"
     log(msg, f)
     f.flush()
+
+date = datetime.now().strftime("%Y%m%d_%H%M%S")
+#f = open(f"kimp{date}.txt", "a")
+f = open(f"log.txt", "a")
+log(date, f)
 
 if ORDER_TEST:
     print('test order')
@@ -90,11 +88,12 @@ else:
         print('not go')
         exit(0)
 
+lastMin = None
 cnt = 0
 delay = 2
+
 while True:
     now = datetime.now()
-    log(now, f)
     if now.minute != lastMin:
         krwPerUsd = float(krw_per_usd()) #fixme: error handling for float version fail
         lastMin = now.minute
