@@ -121,7 +121,7 @@ arbiRanges = []
 # arbiRanges.append(ArbiRange(pd.datetime(2021, 9,  7), pd.datetime(2021, 9, 26), 3.5,  2.5))
 # #arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 27), pd.datetime(2021, 9, 30), 3.4,  2.8))
 # arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 29), pd.datetime(2021, 10, 5), 3.0,  2.3))
-arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 3), pd.datetime(2021, 10, 5), 2.8,  2.1))
+arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 3), pd.datetime(2021, 10, 5), 2.8,  2.2))
 
 # lastIdx = 0
 # while True:

@@ -6,6 +6,7 @@ import json
 import math
 
 from exchange import *
+from util.math import *
 
 ub_eos_addr = 'eosupbitsusr'
 ub_eos_memo = '5772f423-5c5a-4361-9678-2e070338fec1'
@@ -53,7 +54,21 @@ def wait_kimp_outTh(binance, bn_pair, ub_pair, krwPerUsd, outTh):
         time.sleep(1)
 '''
 
-def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, bn_p_usd, maxUSD, krwPerUSD, inTh, TEST= True):
+def wait_bn_future_settle(binance, bn_pair, bn_p_usd):
+    max_wait = 10
+    permit_diff = 0.004 #asset -> price -> 3ticks
+    for i in range(1,max_wait+1):
+        f_t_p, f_av_q = bn_fut_1st_bid(binance, bn_pair)
+        diff = bn_p_usd - f_t_p #for short, f_t_p higher is okay
+        if diff < permit_diff:
+            break
+        print(f"[wait_bn_future_settle]price wait bn:{bn_p_usd} - f_p:{f_t_p} < diff:{diff}")
+        time.sleep(1)
+        if i == max_wait:
+            print(f"[wait_bn_future_settle]spot-future diff not converge:{diff}. taking risks")
+    return f_t_p, f_av_q
+
+def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, bn_p_usd, maxUSD, krwPerUSD, inTh, TEST=True):
     assert check_fee_bnb(binance, maxUSD)
 
     balUSDT = bn_get_spot_balance(binance, 'USDT')
@@ -68,25 +83,17 @@ def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, bn_p_usd, maxUSD, krwPerUSD,
     # #2a. Spot Buy
     bn_pair = bn_usdt_pair(asset)
     #t_p, av_q = bn_spot_1st_ask(binance, bn_pair) #market <-
-    ## #t_p, av_q = bn_spot_1st_bid(binance, bn_pair) #wait
-    t_q = math.floor(maxUSD/bn_p_usd*10)/10 #spot 4, future 1 #<-
+    t_q = floor_1(maxUSD/bn_p_usd) #spot 4, future 1 #<-
     t_q_fee = round(t_q-fee, 1)
-    order = bn_spot_trade(binance, bn_pair, TRADE_BUY, bn_p_usd, t_q, TEST) #<-
-    bn_wait_order(binance, bn_pair, order['orderId']) #<-
+    bn_order_s = bn_spot_trade(binance, bn_pair, TRADE_BUY, bn_p_usd, t_q, TEST) #<-
+    bn_wait_order(binance, bn_order_s, BN_SPOT, TEST) #<-
     
     # #2b. Futures Short
-    while True:
-        f_t_p, f_av_q = bn_fut_1st_bid(binance, bn_pair)
-        diff = abs(bn_p_usd - f_t_p)
-        if diff < 0.004:
-            break
-        print(f"[arbi_in_bn_to_ub]price wait bn:{bn_p_usd} - f_p:{f_t_p} < absDiff:{diff}")
-        time.sleep(1)
-    
-    order = bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q_fee, TEST) #<-
-    bn_wait_fut_order(binance, bn_pair, order['orderId']) #<-
-    
-    
+    f_t_p, f_av_q = wait_bn_future_settle(binance, bn_pair, bn_p_usd)
+
+    bn_order_f = bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q_fee, TEST) #<-
+    bn_wait_order(binance, bn_order_f, BN_FUT, TEST) #<-
+
     #### 3. swap exchange ####
     bn_wait_balance(binance, asset, t_q)
 
@@ -103,9 +110,7 @@ def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, bn_p_usd, maxUSD, krwPerUSD,
 
     #3c. wait deposit - UB
     ub_wait_deposit(upbit2, txid)
-
-    #check balance
-    print(ub_get_spot_balance(upbit, asset))
+    ub_wait_balance(upbit, asset, t_q_fee)  #wait balance available
 
     #### 4. Sell & UnHedge ####
     #4a. Spot Sell
@@ -114,14 +119,14 @@ def arbi_in_bn_to_ub(binance, upbit, upbit2, asset, bn_p_usd, maxUSD, krwPerUSD,
     ub_p_krw, bn_p_usd = wait_kimp_inTh(binance, bn_pair, ub_pair, krwPerUSD, inTh) #ensure target kimp is maintained
 
     #t_p, av_q = ub_spot_1st_bid(ub_pair)
-    ub_order = ub_spot_trade(upbit, ub_pair, TRADE_SELL, ub_p_krw, t_q_fee, krwPerUSD, TEST)
+    ub_order_s = ub_spot_trade(upbit, ub_pair, TRADE_SELL, ub_p_krw, t_q_fee, krwPerUSD, TEST)
 
     #4b. Futures Long
     #f_t_p, f_av_q = bn_fut_1st_ask(binance, bn_pair)
-    bn_order = bn_fut_trade(binance, bn_pair, TRADE_BUY, bn_p_usd, t_q_fee, TEST)
+    bn_order_f = bn_fut_trade(binance, bn_pair, TRADE_BUY, bn_p_usd, t_q_fee, TEST)
 
-    ub_wait_order(upbit, ub_order['uuid'])
-    bn_wait_fut_order(binance, bn_pair, bn_order['orderId'])
+    ub_wait_order(upbit, ub_order_s, TEST)
+    bn_wait_order(binance, bn_order_f, BN_FUT, TEST)
 
     return True
     
@@ -142,23 +147,21 @@ def arbi_out_ub_to_bn(binance, upbit, upbit2, asset, ub_p_krw, bn_p_usd, maxKRW,
     #2a. Spot Buy
     ub_pair = ub_krw_pair(asset)
     #t_p, av_q = ub_spot_1st_ask(ub_pair) #market
-    #t_p, av_q = ub_spot_1st_bid(ub_pair) #wait
     #t_p = 5730 #fixed
-    t_q = math.floor(maxKRW/ub_p_krw*10)/10
-    order = ub_spot_trade(upbit, ub_pair, TRADE_BUY, ub_p_krw, t_q, krwPerUSD, TEST); #<-
-    ub_wait_order(upbit, order['uuid']) #<-
+    t_q = floor_1(maxKRW/ub_p_krw)
+    ub_order = bn_order = None
+    #try:
+    ub_order = ub_spot_trade(upbit, ub_pair, TRADE_BUY, ub_p_krw, t_q, TEST); #<-
+    ub_wait_order(upbit, ub_order) #<-
 
     # #2b. Futures Short
-    while True:
-        f_t_p, f_av_q = bn_fut_1st_bid(binance, bn_pair)
-        diff = abs(bn_p_usd - f_t_p)
-        if diff < 0.004:
-            break
-        print(f"[arbi_in_bn_to_ub]price wait bn:{bn_p_usd} - f_p:{f_t_p} < absDiff:{diff}")
-        time.sleep(1)
+    f_t_p, f_av_q = wait_bn_future_settle(binance, bn_pair, bn_p_usd)
 
-    order = bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q, TEST) #<-
-    bn_wait_fut_order(binance, bn_pair, order['orderId']) #<-
+    bn_order = bn_fut_trade(binance, bn_pair, TRADE_SELL, f_t_p, t_q, TEST) #<-
+    bn_wait_order(binance, bn_order, BN_FUT, TEST) #<-
+    #except Exception as e:
+        #if ub_order:    ub_cancel_or_refund(upbit, ub_order, ub_pair, TEST)
+        #if bn_order:    bn_cancel_or_refund(binance, bn_order, bn_pair, TEST)
 
     #### 3. swap exchange ####
     #3a. withdraw
@@ -173,9 +176,7 @@ def arbi_out_ub_to_bn(binance, upbit, upbit2, asset, ub_p_krw, bn_p_usd, maxKRW,
 
     #3c. wait deposit - BN
     bn_wait_deposit(binance, asset, txid)
-
-    #check balance
-    print(bn_get_spot_balance(binance, asset))
+    bn_wait_balance(binance, asset, t_q) #wait balance available
 
     #### 4. Sell & UnHedge ####
     #no need -> kimp is fixed when BU spot + Bn shot bought
@@ -184,14 +185,14 @@ def arbi_out_ub_to_bn(binance, upbit, upbit2, asset, ub_p_krw, bn_p_usd, maxKRW,
     #4a. Spot Sell
     bn_pair = bn_usdt_pair(asset)
     t_p, av_q = bn_spot_1st_bid(binance, bn_pair) #market
-    bn_order1 = bn_spot_trade(binance, bn_pair, TRADE_SELL, t_p, t_q, TEST)
+    bn_order_s = bn_spot_trade(binance, bn_pair, TRADE_SELL, t_p, t_q, TEST)
 
     #4b. Futures Long
     f_t_p, f_av_q = bn_fut_1st_ask(binance, bn_pair)
-    bn_order2 = bn_fut_trade(binance, bn_pair, TRADE_BUY, f_t_p, t_q, TEST)
+    bn_order_f = bn_fut_trade(binance, bn_pair, TRADE_BUY, f_t_p, t_q, TEST)
 
-    bn_wait_order(binance, bn_pair, bn_order1['orderId'])
-    bn_wait_fut_order(binance, bn_pair, bn_order2['orderId'])
+    bn_wait_order(binance, bn_order_s, BN_SPOT, TEST)
+    bn_wait_order(binance, bn_order_f, BN_FUT, TEST)
 
     return True
 

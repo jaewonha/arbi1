@@ -5,14 +5,20 @@ from binance.exceptions import BinanceAPIException, BinanceOrderException
 #from binance import Client, AsyncClient, DepthCacheManager, BinanceSocketManager
 import time
 import math
+
+import itertools
 from util.log import log
 
-#const
-TRADE_BUY = 6010
-TRADE_SELL = 6011
 
-FUT_SHORT = 7010
-FUT_LONG  = 7011
+#const
+BN_SPOT     = 5010
+BN_FUT      = 5011
+TRADE_BUY   = 6010
+TRADE_SELL  = 6011
+
+FUT_SHORT   = 7010
+FUT_LONG    = 7011
+
 
 #func
 def bn_get_spot_balance(client, asset, doRound = True):
@@ -130,22 +136,27 @@ def bn_fut_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
             price=t_p,
             quantity=t_q)
 
-def bn_wait_order(client, pair, order, TEST):
-    if TEST:
-        return
+def bn_wait_order(client, order, type, TEST):
+    if TEST: return
 
-    print(order)
-    while True:
-        result = client.get_order(symbol=pair,orderId=order['orderId'])
-        state = result['status']
-        print(f"order_state:{state}")
+    symbol = order['symbol']
+    for i in itertools.count():
+        if type==BN_SPOT:
+            _order = client.get_order(symbol=symbol, orderId=order['orderId'])
+        elif type==BN_FUT:
+            _order = client.futures_get_order(symbol=symbol, orderId=order['orderId'])
+        else:
+            raise Exception('unknown type:{type}')
 
-        if state == 'FILLED':
-            return True
-        elif state == 'CANCELED':
-            raise Exception('bn_wait_order:order canceled')
-        #fixme: rest of error case check
-        
+        state = _order['status']
+        print(f"[bn_wait_order]({i}) state={state}")
+        #PARTIALLY_FILLED CANCELED REJECTED EXPIRED NEW
+        if state == 'NEW' or state == 'PARTIALLY_FILLED':
+            pass
+        elif state == 'CANCELED' or state == 'REJECTED' or state == 'EXPIRED':
+            raise Exception('[bn_wait_order]:order {state}')
+        elif state == 'FILLED':
+            break
         time.sleep(1)
 
 def bn_get_deposit(client, asset, txid):
@@ -213,24 +224,35 @@ def bn_wait_withdraw(client, withdraw_id):
         time.sleep(3)
         cnt = cnt + 3
 
-def bn_wait_order(binance, pair, orderId):
-    cnt = 0
-    while True:
-        order = binance.get_order(symbol=pair,orderId=orderId)
-        state = order['status']
-        print(f"({cnt})bn_wait_order: state={state}")
-        if state =='FILLED': #PARTIALLY_FILLED CANCELED REJECTED EXPIRED NEW
-            break
-        time.sleep(1)
-        cnt = cnt + 1
+def bn_cancel_or_refund(client, order, pair, TEST):
+    if TEST: return
 
-def bn_wait_fut_order(binance, pair, orderId):
-    cnt = 0
-    while True:
-        order = binance.futures_get_order(symbol=pair,orderId=orderId)
-        state = order['status']
-        print(f"({cnt})bn_wait_fut_order: state={state}")
-        if state =='FILLED': #PARTIALLY_FILLED CANCELED REJECTED EXPIRED NEW
+    assert pair == order['symbol']
+
+    func_getOrder = {
+        BN_SPOT:client.get_order,
+        BN_FUT:client.futures_get_order
+    }
+
+    func_cancelOrder = {
+        BN_SPOT:client.cancel_order,
+        BN_FUT:client.futures_cancel_order
+    }
+
+    orderId = order['orderId']
+    for i in itertools.count():
+        _order = func_getOrder[_type](symbol=pair, orderId=orderId)
+        state = _order['status']
+        print(f"[bn_cancel_or_refund]({i}) state={state}")
+
+        #PARTIALLY_FILLED CANCELED REJECTED EXPIRED NEW
+        if state == 'NEW' or state == 'PARTIALLY_FILLED':
+            ret = func_cancelOrder[_type](symbol=pair, orderId=orderId)
+            print(f"[bn_cancel_or_refund] cancel:{ret}")
+            #re-iter -> check state changed to 'canceled'
+        elif state == 'CANCELED' or state == 'REJECTED' or state == 'EXPIRED':
+            print(f"canceled")
+        elif state == 'FILLED':
+
             break
         time.sleep(1)
-        cnt = cnt + 1
