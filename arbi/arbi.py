@@ -151,8 +151,8 @@ def arbi_out_ub_to_bn(binance, upbit, upbit2, asset, ub_p_krw, bn_p_usd, maxKRW,
     t_q = floor_1(maxKRW/ub_p_krw)
     ub_order = bn_order = None
     #try:
-    ub_order = ub_spot_trade(upbit, ub_pair, TRADE_BUY, ub_p_krw, t_q, TEST); #<-
-    ub_wait_order(upbit, ub_order) #<-
+    ub_order = ub_spot_trade(upbit, ub_pair, TRADE_BUY, ub_p_krw, t_q, krwPerUSD, TEST); #<-
+    ub_wait_order(upbit, ub_order, TEST) #<-
 
     # #2b. Futures Short
     f_t_p, f_av_q = wait_bn_future_settle(binance, bn_pair, bn_p_usd)

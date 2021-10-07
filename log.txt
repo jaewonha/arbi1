@@ -52,3 +52,14 @@ time to get-in(BN->UB)! kimp=2.52 (UB=4.7837, BN=4.666) @2021-10-08 01:08:42.662
 [ub_spot_sell]KRW-EOS 10.6q @ 5675.0W(4.7669$), TEST=False
 [bn_fut_BUY]EOSUSDT 10.6q @ 4.65$, TEST=False
 [total_asset]ub/bn: [16917.97 + 30606.0 = 47523.97] -> (16968.47 + 30556.1 = 47524.57), diff=0.6$, a_kimp=1.2%, kimpGain=-1.1%, maxUSD=50$, assetGain=0.0%, krwPerUsd=1190.5
+20211008_011735
+20211008_011753
+20211008_011807
+20211008_011951
+20211008_012220
+time to flight(UB->BN)! kimp=2.85 (UB=4.7753, BN=4.643) @2021-10-08 01:22:22.556033
+[ub_spot_buy]KRW-EOS 10.4q @ 5685.0W(4.7753$), TEST=False
+[bn_fut_SELL]EOSUSDT 10.4q @ 4.649$, TEST=False
+[bn_spot_SELL]EOSUSDT 10.4q @ 4.659$, TEST=False
+[bn_fut_BUY]EOSUSDT 10.4q @ 4.666$, TEST=False
+[total_asset]ub/bn: [16968.46 + 30556.1 = 47524.56] -> (16918.78 + 30604.6 = 47523.38), diff=-1.18$, a_kimp=-2.36%, kimpGain=0.64%, maxUSD=50$, assetGain=-0.0%, krwPerUsd=1190.5

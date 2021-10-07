@@ -165,7 +165,7 @@ def ub_cancel_or_refund(client, order, TEST):
                 
                 log(f"[ub_cancel_or_refund]({i}) sell remain t_p:{t_p}, r_q:{r_q}")
                 ub_order = ub_spot_trade(client, ub_pair, TRADE_SELL, t_p, r_q, krwPerUSD, TEST);
-                ub_wait_order(client, ub_order)
+                ub_wait_order(client, ub_order, TEST)
                 log(f"remain sell done")
             break
         elif state =='done':
@@ -175,7 +175,7 @@ def ub_cancel_or_refund(client, order, TEST):
                 t_q = float(order['volume']) - float(order['remaining_volume'])
                 log(f"[ub_cancel_or_refund]({i}) refund t_p:{t_p}, t_q:{t_q}")
                 ub_order = ub_spot_trade(client, ub_pair, TRADE_SELL, t_p, t_q, krwPerUSD, TEST);
-                ub_wait_order(client, ub_order)
+                ub_wait_order(client, ub_order, TEST)
                 log(f"refund done")
             break
 
