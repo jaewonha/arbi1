@@ -126,26 +126,6 @@ while True:
     print(f"KIMP[IN] :{kimp[IN] }% (UB={ub_p_usd[IN] }, BN={bn_p_usd[IN] })")
     print(f"KIMP[OUT]:{kimp[OUT]}% (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
-    if (SKIP_STATUS_CHECK or status=='BN') and (kimp[IN]>(IN_TH*IN_TRF_R) or ARBI_SEQ_TEST):
-        log(f"time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}")
-        asset_before = get_asset_total(ex)
-        if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], maxUSD, IN_TH, ORDER_TEST):
-            cnt = cnt + 1
-            status = 'UB'
-            asset_after = get_asset_total(ex)
-            print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
-
-    elif (SKIP_STATUS_CHECK or status=='UB') and (kimp[OUT]<OUT_TH or ARBI_SEQ_TEST):
-        log(f"time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}")
-        asset_before = get_asset_total(ex)
-        if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_p_usd[OUT], maxUSD, ORDER_TEST):
-            cnt = cnt + 1
-            status = 'BN'
-            asset_after = get_asset_total(ex)
-            print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
-    
-    if cnt > 5:
-        exit(0)
     time.sleep(delay)
 
 
