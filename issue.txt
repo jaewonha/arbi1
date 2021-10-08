@@ -1,0 +1,24 @@
+Exception has occurred: ConnectionError
+('Connection aborted.', ConnectionResetError(10054, '현재 연결은 원격 호스트에 의해 강제로 끊겼습니다', None, 10054, None))
+
+During handling of the above exception, another exception occurred:
+
+  File "<string>", line 3, in raise_from
+
+During handling of the above exception, another exception occurred:
+
+  File "<string>", line 3, in raise_from
+
+During handling of the above exception, another exception occurred:
+
+  File "C:\Users\MEDIUM\Code\crypto\arbi1\exchange\bn.py", line 73, in bn_spot_1st_ask
+    depth = client.get_order_book(symbol=pair)
+  File "C:\Users\MEDIUM\Code\crypto\arbi1\arbi\arbi.py", line 33, in wait_kimp_inTh
+    bn_p_usd, _  = bn_spot_1st_ask(binance, bn_pair) #market
+
+->  언제든지 커넥션 에러 나올 수 있음.
+-->try catch로 잡아서...?
+-->withdraw에선 그냥 죽어도됨
+-->trade중에만 복구코드... 어렵.. ㅜㅜ
+-->일단 집적트레이드해야.. kimp alert -> program manual execution?
+-->날아간것만 다시 트레이드 하는 코드 넣기.

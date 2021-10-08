@@ -1,14 +1,9 @@
-
-from datetime import datetime, date, timedelta
-from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
-from binance.exceptions import BinanceAPIException, BinanceOrderException
-#from binance import Client, AsyncClient, DepthCacheManager, BinanceSocketManager
 import time
 import math
-
 import itertools
-from util.log import log
 
+from util.log import log
+from classes import *
 
 #const
 BN_SPOT     = 5010
@@ -21,9 +16,9 @@ FUT_LONG    = 7011
 
 
 #func
-def bn_get_spot_balance(client, asset, doRound = True):
+def bn_get_spot_balance(ex: Exchanges, asset: str, doRound: bool = True):
     #print('### spot balance ###')
-    balance = client.get_asset_balance(asset=asset)
+    balance = ex.binance.get_asset_balance(asset=asset)
     assert ( balance['asset'] == 'EOS' or balance['asset'] == 'USDT' or balance['asset'] == 'BNB')
     if doRound:
         s_q = math.floor(float(balance['free'])*10)/10 #2자리 미만 안쓰임
@@ -32,20 +27,20 @@ def bn_get_spot_balance(client, asset, doRound = True):
     #print(f"eos: q={s_q}")
     return s_q
 
-def bn_wait_balance(client, asset, t_q):
+def bn_wait_balance(ex: Exchanges, asset: str, t_q: float):
     time.sleep(3)
     while True:
-        q = bn_get_spot_balance(client, asset)
+        q = bn_get_spot_balance(ex, asset)
         print(f"[bn_wait_balance]{asset}:{q} < {t_q}")
         if q >= t_q:
             break
         time.sleep(1)
         
-def bn_get_fut_balance(client, asset, _type):
+def bn_get_fut_balance(ex: Exchanges, asset: str, _type: str):
     assert asset == 'EOS'
     EOS_IDX = 67 #fixme: NO IDX or ADD XRP or ETC
     #print('### futures balance ###')
-    acc = client.futures_account()
+    acc = ex.binance.futures_account()
     f_eos = acc['positions'][EOS_IDX]
     assert f_eos['symbol'] == 'EOSUSDT' #<-- check!
     f_p = float(f_eos['entryPrice'])
@@ -63,31 +58,31 @@ def bn_get_fut_balance(client, asset, _type):
 def bn_usdt_pair(asset):
     return asset + 'USDT'
 
-def bn_spot_1st_bid(client, pair): #highest buying bids
-    depth = client.get_order_book(symbol=pair)
+def bn_spot_1st_bid(ex: Exchanges, asset: str): #highest buying bids
+    depth = ex.binance.get_order_book(symbol=bn_usdt_pair(asset))
     t_p = round(float(depth['bids'][0][0]), 4)
     av_q = float(depth['bids'][0][1])
     return t_p, av_q
 
-def bn_spot_1st_ask(client, pair): #lowest selling price
-    depth = client.get_order_book(symbol=pair)
+def bn_spot_1st_ask(ex: Exchanges, asset: str): #lowest selling price
+    depth = ex.binance.get_order_book(symbol=bn_usdt_pair(asset))
     t_p = round(float(depth['asks'][0][0]), 4)
     av_q = float(depth['asks'][0][1])
     return t_p, av_q
 
-def bn_fut_1st_bid(client, pair):
-    depth = client.futures_order_book(symbol=pair)
+def bn_fut_1st_bid(ex: Exchanges, asset: str):
+    depth = ex.binance.futures_order_book(symbol=bn_usdt_pair(asset))
     t_p = round(float(depth['bids'][0][0]), 4)
     av_q = float(depth['bids'][0][1])
     return t_p, av_q
 
-def bn_fut_1st_ask(client, pair):
-    depth = client.futures_order_book(symbol=pair)
+def bn_fut_1st_ask(ex: Exchanges, asset: str):
+    depth = ex.binance.futures_order_book(symbol=bn_usdt_pair(asset))
     t_p = round(float(depth['asks'][0][0]), 4)
     av_q = float(depth['asks'][0][1])
     return t_p, av_q
 
-def bn_get_trade_type(tradeMode):
+def bn_get_trade_type(tradeMode: int):
     if tradeMode == TRADE_BUY:
         return Client.SIDE_BUY
     if tradeMode == TRADE_SELL:
@@ -96,11 +91,12 @@ def bn_get_trade_type(tradeMode):
     exit(0)
         
 
-def bn_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
+def bn_spot_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: float, TEST: bool = True):
+    pair = bn_usdt_pair(asset)
     tradeType = bn_get_trade_type(tradeMode)
     log(f"[bn_spot_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
     if TEST:
-        return client.create_test_order(
+        return ex.binance.create_test_order(
             symbol=pair,
             side=tradeType,
             type=Client.ORDER_TYPE_LIMIT,
@@ -108,7 +104,7 @@ def bn_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
             price=t_p,
             quantity=t_q)
     else:
-        return client.create_order(
+        return ex.binance.create_order(
             symbol=pair,
             side=tradeType,
             type=Client.ORDER_TYPE_LIMIT,
@@ -116,11 +112,12 @@ def bn_spot_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
             price=t_p,
             quantity=t_q)
 
-def bn_fut_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
+def bn_fut_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: float, TEST: bool = True):
     tradeType = bn_get_trade_type(tradeMode)
+    pair = bn_usdt_pair(asset)
     log(f"[bn_fut_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
     if TEST:
-        return client.create_test_order(
+        return ex.binance.create_test_order(
             symbol=pair,
             side=tradeType,
             type=Client.ORDER_TYPE_LIMIT,
@@ -128,7 +125,7 @@ def bn_fut_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
             price=t_p,
             quantity=t_q)
     else:
-        return client.futures_create_order(
+        return ex.binance.futures_create_order(
             symbol=pair,
             side=tradeType,
             type=Client.ORDER_TYPE_LIMIT,
@@ -136,15 +133,15 @@ def bn_fut_trade(client, pair, tradeMode, t_p, t_q, TEST = True):
             price=t_p,
             quantity=t_q)
 
-def bn_wait_order(client, order, type, TEST):
+def bn_wait_order(ex: Exchanges, order: dict, type: int, TEST: bool):
     if TEST: return
 
     symbol = order['symbol']
     for i in itertools.count():
         if type==BN_SPOT:
-            _order = client.get_order(symbol=symbol, orderId=order['orderId'])
+            _order = ex.binance.get_order(symbol=symbol, orderId=order['orderId'])
         elif type==BN_FUT:
-            _order = client.futures_get_order(symbol=symbol, orderId=order['orderId'])
+            _order = ex.binance.futures_get_order(symbol=symbol, orderId=order['orderId'])
         else:
             raise Exception('unknown type:{type}')
 
@@ -157,17 +154,18 @@ def bn_wait_order(client, order, type, TEST):
             raise Exception('[bn_wait_order]:order {state}')
         elif state == 'FILLED':
             break
+
         time.sleep(1)
 
-def bn_get_deposit(client, asset, txid):
-    result = client.get_deposit_history(coin=asset)
+def bn_get_deposit(ex: Exchanges, asset: str, txid: str):
+    result = ex.binance.get_deposit_history(coin=asset)
     filtered = list(filter(lambda x: x['txId'] == txid, result))
     return filtered
 
-def bn_wait_deposit(client, asset, txid):
+def bn_wait_deposit(ex: Exchanges, asset: str, txid: str):
     cnt = 0
     while True:
-        ret = bn_get_deposit(client, asset, txid)
+        ret = bn_get_deposit(ex, asset, txid)
         if len(ret) > 0:
             state = ret[0]['status']
             print(f"({cnt})bn_get_deposit: state={state}")
@@ -180,21 +178,21 @@ def bn_wait_deposit(client, asset, txid):
         time.sleep(3)
         cnt = cnt + 3
 
-def bn_withdraw(client, asset, addr, tag, t_q):
-    withdraw = client.withdraw(
+def bn_withdraw(ex: Exchanges, asset: str, addr: str, tag: str, t_q: float):
+    withdraw = ex.binance.withdraw(
         coin=asset,
         address=addr,
         addressTag=tag, #or TAG
         amount=t_q)    
     return withdraw['id']
 
-def bn_wait_withdraw(client, withdraw_id):
+def bn_wait_withdraw(ex: Exchanges, withdraw_id: str):
     time.sleep(10)
     cnt = 10
     txid = None
     while True:
         try:
-            withdraw_result = client.get_withdraw_history_id(withdraw_id)
+            withdraw_result = ex.binance.get_withdraw_history_id(withdraw_id)
             #pprint.pprint(withdraw_result)
             print(f"({cnt})bn_wait_withdraw: state={withdraw_result['status']}")
             if 'txId' in withdraw_result:
@@ -224,19 +222,19 @@ def bn_wait_withdraw(client, withdraw_id):
         time.sleep(3)
         cnt = cnt + 3
 
-def bn_cancel_or_refund(client, order, pair, TEST):
+def bn_cancel_or_refund(ex: Exchanges, order: dict, mode: int, pair: str, TEST: bool):
     if TEST: return
 
     assert pair == order['symbol']
-
+    _type = mode
     func_getOrder = {
-        BN_SPOT:client.get_order,
-        BN_FUT:client.futures_get_order
+        BN_SPOT:ex.binance.get_order,
+        BN_FUT:ex.binance.futures_get_order
     }
 
     func_cancelOrder = {
-        BN_SPOT:client.cancel_order,
-        BN_FUT:client.futures_cancel_order
+        BN_SPOT:ex.binance.cancel_order,
+        BN_FUT:ex.binance.futures_cancel_order
     }
 
     orderId = order['orderId']
@@ -256,3 +254,7 @@ def bn_cancel_or_refund(client, order, pair, TEST):
 
             break
         time.sleep(1)
+
+def bn_get_withdraw_fee(asset):
+    assert asset == 'EOS'
+    return 0.1

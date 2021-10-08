@@ -14,4 +14,5 @@ def log_close():
 
 def log(msg):
     print(msg)
-    print(msg, file=fp)
+    if fp:
+        print(msg, file=fp)
