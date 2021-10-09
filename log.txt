@@ -77,3 +77,49 @@ time to get-in(BN->UB)! kimp=2.49 (UB=4.8005, BN=4.684) @2021-10-08 02:07:17.695
 [bn_fut_SELL]EOSUSDT 213.3q @ 4.688$, TEST=False
 20211008_154723
 20211008_210255
+20211009_095944
+20211009_100048
+time to flight(UB->BN)! kimp=1.97 (UB=4.7742, BN=4.682) @2021-10-09 10:15:04.342647
+[ub_spot_buy]KRW-EOS 209.4q @ 5710.0W(4.7742$), TEST=False
+[bn_fut_SELL]EOSUSDT 209.4q @ 4.683$, TEST=False
+[bn_spot_SELL]EOSUSDT 209.4q @ 4.664$, TEST=False
+[bn_fut_BUY]EOSUSDT 209.4q @ 4.667$, TEST=False
+[total_asset]ub/bn: [18880.12 + 28605.2 = 47485.32] -> (17879.89 + 29581.8 = 47461.69), diff=-23.63$, a_kimp=-2.36%, kimpGain=-0.36%, maxUSD=1000$, assetGain=-0.05%, krwPerUsd=1196.0
+time to get-in(BN->UB)! kimp=2.36 (UB=4.7659, BN=4.656) @2021-10-09 10:22:49.667015
+[bn_spot_BUY]EOSUSDT 214.7q @ 4.656$, TEST=False
+[bn_fut_SELL]EOSUSDT 214.6q @ 4.657$, TEST=False
+[ub_spot_sell]KRW-EOS 214.6q @ 5705.0W(4.7701$), TEST=False
+[bn_fut_BUY]EOSUSDT 214.6q @ 4.647$, TEST=False
+[total_asset]ub/bn: [17879.89 + 29581.8 = 47461.69] -> (18903.04 + 28582.2 = 47485.24), diff=23.55$, a_kimp=2.35%, kimpGain=-0.25%, maxUSD=1000$, assetGain=0.05%, krwPerUsd=1196.0
+time to get-in(BN->UB)! kimp=2.6 (UB=4.7659, BN=4.645) @2021-10-09 10:59:17.482396
+[bn_spot_BUY]EOSUSDT 215.2q @ 4.645$, TEST=False
+[bn_fut_SELL]EOSUSDT 215.1q @ 4.647$, TEST=False
+[ub_spot_sell]KRW-EOS 215.1q @ 5710.0W(4.7742$), TEST=False
+[bn_fut_BUY]EOSUSDT 215.1q @ 4.651$, TEST=False
+[total_asset]ub/bn: [18903.04 + 28582.2 = 47485.24] -> (19929.46 + 27582.6 = 47512.06), diff=26.82$, a_kimp=2.68%, kimpGain=0.08%, maxUSD=1000$, assetGain=0.06%, krwPerUsd=1196.0
+time to get-in(BN->UB)! kimp=2.56 (UB=4.7701, BN=4.651) @2021-10-09 11:08:00.201146
+[bn_spot_BUY]EOSUSDT 215.0q @ 4.651$, TEST=False
+[bn_fut_SELL]EOSUSDT 214.9q @ 4.65$, TEST=False
+[ub_spot_sell]KRW-EOS 214.9q @ 5705.0W(4.7701$), TEST=False
+[bn_fut_BUY]EOSUSDT 214.9q @ 4.648$, TEST=False
+[total_asset]ub/bn: [19929.46 + 27582.6 = 47512.06] -> (20954.04 + 26582.6 = 47536.64), diff=24.58$, a_kimp=2.46%, kimpGain=-0.14%, maxUSD=1000$, assetGain=0.05%, krwPerUsd=1196.0
+time to get-in(BN->UB)! kimp=2.65 (UB=4.7701, BN=4.647) @2021-10-09 11:17:38.565159
+[bn_spot_BUY]EOSUSDT 215.1q @ 4.647$, TEST=False
+[bn_fut_SELL]EOSUSDT 215.0q @ 4.648$, TEST=False
+[ub_spot_sell]KRW-EOS 215.0q @ 5735.0W(4.7952$), TEST=False
+[bn_fut_BUY]EOSUSDT 215.0q @ 4.673$, TEST=False
+[total_asset]ub/bn: [20954.04 + 26582.6 = 47536.64] -> (21984.48 + 25583.0 = 47567.48), diff=30.84$, a_kimp=3.08%, kimpGain=0.48%, maxUSD=1000$, assetGain=0.06%, krwPerUsd=1196.0
+time to get-in(BN->UB)! kimp=2.55 (UB=4.791, BN=4.672) @2021-10-09 11:28:08.779354
+[bn_spot_BUY]EOSUSDT 214.0q @ 4.672$, TEST=False
+[bn_fut_SELL]EOSUSDT 213.9q @ 4.673$, TEST=False
+[ub_spot_sell]KRW-EOS 213.9q @ 5750.0W(4.8077$), TEST=False
+[bn_fut_BUY]EOSUSDT 213.9q @ 4.685$, TEST=False
+[total_asset]ub/bn: [21984.48 + 25583.0 = 47567.48] -> (23012.33 + 24583.2 = 47595.53), diff=28.05$, a_kimp=2.81%, kimpGain=0.21%, maxUSD=1000$, assetGain=0.06%, krwPerUsd=1196.0
+20211009_142028
+20211009_142109
+time to get-in(BN->UB)! kimp=2.37 (UB=4.8286, BN=4.717) @2021-10-09 14:21:16.044275
+[bn_spot_BUY]EOSUSDT 211.9q @ 4.717$, TEST=False
+[bn_fut_SELL]EOSUSDT 211.8q @ 4.72$, TEST=False
+[ub_spot_sell]KRW-EOS 211.8q @ 5785.0W(4.837$), TEST=False
+[bn_fut_BUY]EOSUSDT 211.8q @ 4.713$, TEST=False
+[total_asset]ub/bn: [23012.33 + 24583.2 = 47595.53] -> (24036.29 + 23583.7 = 47619.99), diff=24.46$, a_kimp=1.22%, kimpGain=-1.38%, maxUSD=2000$, assetGain=0.05%, krwPerUsd=1196.0

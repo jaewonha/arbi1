@@ -21,11 +21,11 @@ from arbi import *
 # IN_TH = 3.5
 status = 'BN'
 #status = 'UB' 
-OUT_TH = 1.25
-IN_TH = 2.75
+OUT_TH = 2.0
+IN_TH = 2.6
 IN_TRF_R = 0.9
 #maxUSD = 50
-maxUSD = 1000
+maxUSD = 2000
 asset = "EOS" #target asset to trade arbi
 print(f"config: assets={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
 ORDER_TEST = False
@@ -144,7 +144,8 @@ while True:
             asset_after = get_asset_total(ex)
             print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
     
-    if cnt > 5:
+    if cnt > 10:
+        print(f"cnt{cnt} exit")
         exit(0)
     time.sleep(delay)
 
