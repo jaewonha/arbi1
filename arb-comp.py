@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib
 #from pylab import get_current_fig_manager
 import matplotlib.pyplot as plt
-import mplcursors
+#import mplcursors #pip install plotly
 import numpy as np
 import math
 import datetime as dt
@@ -11,6 +11,7 @@ import pyupbit
 import asyncio
 import json
 
+import time
 from datetime import datetime, date, timedelta
 
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
@@ -19,37 +20,21 @@ from conv.krw2usd import krw_per_usd
 
 #from util import move_figure
 from classes.ArbiRange import ArbiRange
-
-def utc_to_str(utc_ts_bn, div1000=False):
-    if div1000:
-        ts = int(utc_ts_bn)/1000
-    else:
-        ts = int(utc_ts_bn)
-    return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+from util.time import *
     
-#load
-# df_bn = pd.read_csv("./BN-EOSUSDT-180d.csv", index_col=0, parse_dates=True)
-# df_ub = pd.read_csv("./UB-KRW-EOS-180d.csv", index_col=0, parse_dates=True).drop(['volume', 'value'], axis=1)
-#df_bn = pd.read_csv("./BN-EOSUSDT-3d-1m-interpolated.csv", index_col=1, parse_dates=True)
-#df_ub = pd.read_csv("./UB-KRW-EOS-3d-1m-interpolated.csv", index_col=1, parse_dates=True).drop(['volume', 'value'], axis=1)
-
-#df_usd = pd.read_csv("./usd-3day-min_filled.csv", index_col=0, parse_dates=True)
-#df_usd['date'] = pd.to_datetime(df_usd['date']); df_usd = df_usd.set_index('date')
-
 days = 1
 bn_pair = 'EOSUSDT'
 
 krwPerUsd = krw_per_usd()
-# initialise the client
-if False:
+if True: #True: force new download, False: use cached csv file
     client = Client()
 
     yesterday = date.today() - timedelta(days)
-    from_ts = yesterday.strftime("%s")
+    from_ts = time.mktime(yesterday.timetuple())
 
     klines = []
     #KLINE_INTERVAL_1DAY, KLINE_INTERVAL_1HOUR
-    klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1MINUTE, from_ts)
+    klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1MINUTE, str(from_ts))
     #klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1HOUR, from_ts)
     klines2 = np.delete(klines, range(5,12), axis=1)
 

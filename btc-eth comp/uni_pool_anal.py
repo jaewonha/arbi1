@@ -36,7 +36,7 @@ with open(path, "r") as file:
         print(f"pool id:{pool['id']}")
         print(f"pool name:{pool['token0']['symbol']}-{pool['token1']['symbol']}")
         print(f"pool fee%:{feeRate*100}")
-        print(f"pool createdAt:{utc_to_str(pool['createdAtTimestamp'])}")
+        print(f"pool createdAt:{utc_to_str(pool['createdAtTimestamp'], False, True)}")
         print(f"pool #day data:{len(pool['poolDayData'])}")
 
         poolDayData = pool['poolDayData']
@@ -48,7 +48,7 @@ with open(path, "r") as file:
         tvlUSD = []
 
         for data in poolDayData:
-            day.append(utc_to_str(data['date']))
+            day.append(utc_to_str(data['date'], False, True))
             date.append(int(data['date']))
             volumeUSD.append(float(data['volumeUSD'])/unit1M)
             tvlUSD.append( float(data['tvlUSD'])/unit1M )

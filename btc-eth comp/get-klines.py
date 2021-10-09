@@ -6,15 +6,7 @@ import numpy as np
 from datetime import datetime, date, timedelta
 from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
 
-def utc_to_str(utc_ts_bn, div1000=False):
-        if div1000:
-            ts = int(utc_ts_bn)/1000
-        else:
-            ts = int(utc_ts_bn)
-        #return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%SZ')
-        return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        #return datetime.fromtimestamp(ts).strftime('%Y/%m/%d %H:%M')
-        #return datetime.fromtimestamp(ts).strftime('%Y/%m/%d')
+from util.time import *
 
 def handle_socket_message(msg):
     #print(f"message type: {msg['e']}")
@@ -28,7 +20,6 @@ def handle_socket_message(msg):
     print(msg['k']['l'])
     print(utc_to_str(msg['k']['T'], True))
     print("\n")
-    
 
 # [
 #     [
