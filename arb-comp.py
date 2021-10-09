@@ -33,19 +33,15 @@ if True: #True: force new download, False: use cached csv file
     from_ts = time.mktime(yesterday.timetuple())
 
     klines = []
-    #KLINE_INTERVAL_1DAY, KLINE_INTERVAL_1HOUR
+    #KLINE_INTERVAL_1DAY, KLINE_INTERVAL_1HOUR, KLINE_INTERVAL_1MINUTE
     klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1MINUTE, str(from_ts))
-    #klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1HOUR, from_ts)
     klines2 = np.delete(klines, range(5,12), axis=1)
 
     
     for i in range(0, len(klines2)):
         klines2[i][0] = utc_to_str(klines2[i][0], True)
-        #for j in range(1, len(klines2[i])):
-            #klines2[i][j] = round(float(klines2[i][j])*krwPerUsd, 1)
-
+        
     df_bn = pd.DataFrame(klines2, columns=['ts','open','high','low','close']).set_index('ts')
-    #print(df)
     #df.to_csv('BN-'+symbol+'-'+str(days)+'d.csv')
 
     df_ub = pyupbit.get_ohlcv("KRW-EOS", count=24*60*days, interval="minute1")
@@ -99,31 +95,15 @@ df_bn.set_index('ts', inplace=True)
 df_usd = pd.DataFrame(df_bn, copy=True)
 df_usd['open'] = df_usd['high'] = df_usd['low'] = df_usd['close'] = krwPerUsd
 
-
 arbiRanges = []
 # arbiRanges.append(ArbiRange(pd.datetime(2021, 7,  1), pd.datetime(2021, 7, 25), 3.5,  2.5))
 # arbiRanges.append(ArbiRange(pd.datetime(2021, 7, 26), pd.datetime(2021, 9,  6), 0.6, -0.3))
 # arbiRanges.append(ArbiRange(pd.datetime(2021, 9,  7), pd.datetime(2021, 9, 26), 3.5,  2.5))
 # #arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 27), pd.datetime(2021, 9, 30), 3.4,  2.8))
 # arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 29), pd.datetime(2021, 10, 5), 3.0,  2.3))
-arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 3), pd.datetime(2021, 10, 5), 2.8,  2.2))
+#arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 3), pd.datetime(2021, 10, 5), 2.8,  2.2))
+arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 8), pd.datetime(2021, 10, 10), 2.45,  1.95))
 
-# lastIdx = 0
-# while True:
-#     mismatch = False
-#     for i in range(lastIdx,len(df_ub.index)):
-#         if df_ub.index[i] != df_bn.index[i]:
-#             df_bn = df_bn.drop(df_bn.index[i])
-#             print(f"mismatch at {i}")
-#             mismatch = True
-#             lastIdx = i-2
-#             break
-
-#     if not mismatch:
-#         break
-
-# df_bn.to_csv('ub-corrected.csv')
-# exit(0)
 
 #crop range
 if False:
@@ -147,13 +127,14 @@ if False:
     df_bn = df_bn.rolling(window=5).mean()
     df_ub = df_ub.rolling(window=5).mean()
 
-# $ to KRW conv.
-df_bn['close'] = df_bn['close']*df_usd['close'] 
+
+#df_bn['close'] = df_bn['close']*df_usd['close']  # $ to KRW conv.
+df_ub['close'] = df_ub['close']/df_usd['close']  # KRW to $ conv. 
 
 # Kimp gen.
 kimp = ( df_ub['close'] / df_bn['close'] - 1.0 ) * 100
 kimp.dropna(inplace=True)
-n_kimp = kimp * 1600 + 4000 #normalized
+#n_kimp = kimp * 1600 + 4000 #normalized
 
 
 #plot
@@ -194,10 +175,11 @@ OUT = 11
 state = UB
 balance = 1000
 ### config
-# IN_TH  = 0.6
-# OUT_TH = -0.3
-IN_TH = 3.5
-OUT_TH = 2.5
+#use above range instead
+#IN_TH  = 0.6
+#OUT_TH = -0.3
+#IN_TH = 2.6
+#OUT_TH = 2.0
 
 selRanges = []
 actions = []
@@ -209,7 +191,7 @@ def getRangeForDate(ranges, date):
             return r
 
 
-## iterate kimp index
+## iterate kimp index - get target arbitrage range
 for i in range(1,len(kimp)):
     date = kimp.index[i]
     v = kimp[i]
@@ -254,6 +236,8 @@ gain = 0
 up_fee = 0.0005
 bn_fee = 0.001
 bn_fut_fee = 0.0004
+
+#calc arbitrage gains
 for i in range(1,len(tss)):
     a = actions[i]
     ts = tss[i]
@@ -289,12 +273,7 @@ for i in range(1,len(tss)):
 
             balance = totalGain + balance
 
-            #stat
-            bn_ch = df_bn.iloc[ts+5]['close'] / df_bn.iloc[ts]['close']
-            ub_ch = df_ub.iloc[ts+5]['close'] / df_ub.iloc[ts]['close']
-            k_ch = kimp.iloc[ts+5] - kimp.iloc[ts]
-            print(f"[OT]: t_q={round(t_q,2)}, ub_pr={round(ub_ch,2)}, bn_pr={round(bn_ch,2)}, k=({round(kimp.iloc[ts],2)},{round(kimp.iloc[ts+5],2)}), gain(s,f)=({round(spotGain,2)},{round(futGain,2)}) => {round(totalGain,2)}, R={round(gainRatio*100,2)}, $={round(balance,2)}")
-            #stat
+            mode = 'OT'
         elif a == IN:
             #BN: buy spot
             t_p = float(df_bn.iloc[ts]['close'])
@@ -324,14 +303,22 @@ for i in range(1,len(tss)):
 
             balance = totalGain + balance
 
-            #stat
-            bn_ch = df_bn.iloc[ts+5]['close'] / df_bn.iloc[ts]['close']
-            ub_ch = df_ub.iloc[ts+5]['close'] / df_ub.iloc[ts]['close']
-            k_ch = kimp.iloc[ts+5] - kimp.iloc[ts]
-            print(f"[IN]: t_q={round(t_q,2)}, ub_pr={round(ub_ch,2)}, bn_pr={round(bn_ch,2)}, k=({round(kimp.iloc[ts],2)},{round(kimp.iloc[ts+5],2)}), gain(s,f)=({round(spotGain,2)},{round(futGain,2)}) => {round(totalGain,2)}, R={round(gainRatio*100,2)}, $={round(balance,2)}")
+            mode = 'IN'
         else:
             print('error:178')
             exit(0)
+        
+        #stat
+        bn_ch = (1-df_bn.iloc[ts+5]['close'] / df_bn.iloc[ts]['close'])*100
+        ub_ch = (1-df_ub.iloc[ts+5]['close'] / df_ub.iloc[ts]['close'])*100
+        k_ch = kimp.iloc[ts+5] - kimp.iloc[ts]
+        
+        print(
+                f"[{mode}]: t_q={round(t_q,2)}, "
+                f"k=({round(kimp.iloc[ts],2)},{round(kimp.iloc[ts+5],2)}), "
+                f"\tgain(s,f):{round(spotGain,2)}+{round(futGain,2)}={round(totalGain,2)},"
+                f"\tR={round(gainRatio*100,2)}, $={round(balance,2)},"
+                f"\tub_ch%={round(ub_ch,2)}, bn_ch%={round(bn_ch,2)}")
     else:
         gain = gain + (+v if a is IN else -v)
         print(f"[{date}]:({selRanges[i]}):{'IN ' if a == IN else 'OUT'} at {v} => {gain}")

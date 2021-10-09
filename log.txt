@@ -147,3 +147,5 @@ time to get-in(BN->UB)! kimp=2.55 (UB=4.791, BN=4.672) @2021-10-09 11:28:08.7793
 [ub_spot_sell]KRW-EOS 426.4q @ 5750.0W(4.8077$), TEST=False
 [bn_fut_BUY]EOSUSDT 426.4q @ 4.685$, TEST=False
 [total_asset]ub/bn: [30183.25 + 17584.3 = 47767.55] -> (32232.23 + 15584.4 = 47816.63), diff=49.08$+4.264, a_kimp=2.45%, kimpGain=-0.15%, maxUSD=2000$, assetGain=0.1%, krwPerUsd=1196.0
+20211009_232422
+20211009_232454

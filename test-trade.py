@@ -6,7 +6,6 @@ from exchange import *
 
 from arbi import *
 from util.log import *
-from common import *
 
 ex = Exchanges()
 asset = 'EOS'

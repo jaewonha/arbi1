@@ -1,6 +1,5 @@
 from arbi import *
 from util.log import *
-from common import *
 
 ORDER_TEST = False
 maxUSD = 20

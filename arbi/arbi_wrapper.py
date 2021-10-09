@@ -7,7 +7,7 @@ def arbi_in_bn_to_ub(ex: Exchanges, asset: str, bn_p_usd: float, maxUSD: float, 
     #1. check balance
     assert check_fee_bnb(ex, maxUSD)
     assert check_bn_balance(ex, maxUSD)
-    assert check_bn_fut_balance(ex, maxUSD)
+    assert check_bn_fut_balance(ex, asset, maxUSD)
 
     # 2. Hedge & Buy
     t_q, t_q_fee = arbi_in_bnSpotBuy_bnFutShort(ex, asset, bn_p_usd, maxUSD, TEST)
@@ -25,7 +25,7 @@ def arbi_out_ub_to_bn(ex: Exchanges, asset: str, ub_p_krw: float, bn_p_usd: floa
     #1. check balance
     assert check_fee_bnb(ex, maxUSD)
     assert check_ub_balance(ex, maxUSD)
-    assert check_bn_fut_balance(ex, maxUSD)
+    assert check_bn_fut_balance(ex, asset, maxUSD)
     #future account balance & leverage check
     #ex.binance.futures_change_leverage(bn_usdt_pair(asset), leverage=1)
 
