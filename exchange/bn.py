@@ -35,8 +35,19 @@ def bn_wait_balance(ex: Exchanges, asset: str, t_q: float):
         if q >= t_q:
             break
         time.sleep(1)
-        
-def bn_get_fut_balance(ex: Exchanges, asset: str, _type: str):
+
+def bn_get_fut_margin_balance(ex: Exchanges, acc: dict = None):
+    acc = ex.binance.futures_account() if acc == None else acc
+    asset = acc['assets'][1]
+    assert asset['asset'] == 'USDT'
+
+    #float(asset['walletBalance'])
+    #pendingAmt = float(asset['unrealizedProfit'])
+    #if abs(pendingAmt) > 0:
+        #log(f"[bn_get_fut_margin_balance]pendingAmt:{pendingAmt}")
+    return float(asset['marginBalance'])
+
+def bn_get_fut_asset_q(ex: Exchanges, asset: str, _type: str):
     assert asset == 'EOS'
     EOS_IDX = 67 #fixme: NO IDX or ADD XRP or ETC
     #print('### futures balance ###')
@@ -54,6 +65,19 @@ def bn_get_fut_balance(ex: Exchanges, asset: str, _type: str):
         return f_q
     else:
         print('unknown type:' + _type)
+
+def bn_get_fut_balance(ex: Exchanges, asset: str):
+    assert asset == 'EOS'
+    EOS_IDX = 67 #fixme: NO IDX or ADD XRP or ETC
+    #print('### futures balance ###')
+    acc = ex.binance.futures_account()
+    f_eos = acc['positions'][EOS_IDX]
+    assert f_eos['symbol'] == 'EOSUSDT' #<-- check!
+    leverage = float(f_eos['leverage'])
+    marginBalance = bn_get_fut_margin_balance(ex, acc)
+
+    return marginBalance*leverage*0.8 #safe 10%
+
 
 def bn_usdt_pair(asset):
     return asset + 'USDT'

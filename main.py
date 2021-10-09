@@ -41,8 +41,9 @@ signal.signal(signal.SIGINT, signal_handler)
 def get_asset_total(ex):
    ub_usd = ub_get_spot_balance(ex, 'KRW') / ex.krwPerUsd
    bn_usd = bn_get_spot_balance(ex, 'USDT')
-   total_usd = ub_usd + bn_usd
-   return [round(ub_usd,2), round(bn_usd,2), round(total_usd,2)]
+   bn_fut_usd = bn_get_fut_margin_balance(ex)
+   total_usd = ub_usd + bn_usd + bn_fut_usd
+   return [round(ub_usd,2), round(bn_usd,2), round(bn_fut_usd, 2), round(total_usd,2)]
 
 def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
     assetGain = round( (after[2]/before[2]-1)*100, 2 )
@@ -51,7 +52,11 @@ def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
     actualKimp = round((diff/maxUSD)*100, 2)
     kimpGain = round(actualKimp-th, 2)
 
-    log(f"[total_asset]ub/bn: [{before[0]} + {before[1]} = {before[2]}] -> ({after[0]} + {after[1]} = {after[2]}), diff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}")
+    log(f"[total_asset]ub/bn: \
+        [{before[0]} + ({before[1]} + {before[2]}) = {before[3]}] -> \
+        [{after[0]} + ({after[1]} + {after[2]}) = {after[3]}]")
+    log(f"\tdiff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, \
+        maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}")
     log_flush()
 
 ex = Exchanges()
@@ -127,7 +132,7 @@ while True:
     print(f"KIMP[OUT]:{kimp[OUT]}% (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
     if (SKIP_STATUS_CHECK or status=='BN') and (kimp[IN]>(IN_TH*IN_TRF_R) or ARBI_SEQ_TEST):
-        log(f"time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}")
+        log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}")
         asset_before = get_asset_total(ex)
         if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], maxUSD, IN_TH, ORDER_TEST):
             cnt = cnt + 1
@@ -136,7 +141,7 @@ while True:
             print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
 
     elif (SKIP_STATUS_CHECK or status=='UB') and (kimp[OUT]<OUT_TH or ARBI_SEQ_TEST):
-        log(f"time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}")
+        log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}")
         asset_before = get_asset_total(ex)
         if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_p_usd[OUT], maxUSD, ORDER_TEST):
             cnt = cnt + 1

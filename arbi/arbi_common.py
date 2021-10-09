@@ -47,3 +47,10 @@ def check_ub_balance(ex: Exchanges, maxUSD: float)->bool:
         print(f"insufficient KRW balance {balKRW} < {maxKRW}")
         return False
     return True
+
+def check_bn_fut_balance(ex: Exchanges, asset: str, maxUSD: float)->bool:
+    futBal = bn_get_fut_balance(ex, asset)
+    if futBal < maxUSD:
+        print(f"insufficient BN Fut balance {futBal} < {maxUSD}")
+        return False
+    return True
