@@ -6,7 +6,7 @@ from arbi.arbi_out import *
 ex = Exchanges()
 
 asset = 'EOS'
-t_q_fee = 213.2
-inTh = 2.7
+t_q_fee = 207.6
+inTh = 2.45
 TEST = False
 arbi_in_ubSpotSell_bnFutBuy(ex, asset, t_q_fee, inTh, TEST)
