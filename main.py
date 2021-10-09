@@ -51,11 +51,11 @@ def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
     actualKimp = round((diff/maxUSD)*100, 2)
     kimpGain = round(actualKimp-th, 2)
 
-    log(f"[total_asset]ub/bn: \
-        [{before[0]} + ({before[1]} + {before[2]}) = {before[3]}] -> \
-        [{after[0]} + ({after[1]} + {after[2]}) = {after[3]}]")
-    log(f"\tdiff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, \
-        maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}")
+    log(f"[total_asset]ub/bn:"
+        f"[{before[0]} + ({before[1]} + {before[2]}) = {before[3]}] -> "
+        f"[{after[0]} + ({after[1]} + {after[2]}) = {after[3]}]")
+    log(f"\tdiff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, "
+        f"maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}")
     log_flush()
 
 ex = Exchanges()
