@@ -58,18 +58,8 @@ ex = Exchanges()
 
 date = datetime.now().strftime("%Y%m%d_%H%M%S")
 #f = open(f"kimp{date}.txt", "a")
-log_open("log.txt")
+#log_open("log.txt")
 log(date)
-
-if ORDER_TEST:
-    print('test order')
-else:
-    msg = input('execute real order? type "go" to do that >> ')
-    if msg == 'go':
-        print('go real trading')
-    else:
-        print('not go')
-        exit(0)
 
 lastMin = None
 cnt = 0

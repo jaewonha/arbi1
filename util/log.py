@@ -7,10 +7,12 @@ def log_open(path):
     fp = open(f"log.txt", "a")
 
 def log_flush():
-    fp.flush()
+    if fp:
+        fp.flush()
 
 def log_close():
-    fp.close()
+    if fp:
+        fp.close()
 
 def log(msg):
     print(msg)

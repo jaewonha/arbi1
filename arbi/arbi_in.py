@@ -53,6 +53,7 @@ def wait_kimp_inTh(ex: Exchanges, asset: str, inTh: float):
 def arbi_in_ubSpotSell_bnFutBuy(ex: Exchanges, asset: str, t_q_fee: float, inTh: float, TEST: bool):
     ub_p_krw, bn_p_usd = wait_kimp_inTh(ex, asset, inTh) #ensure target kimp is maintained
 
+    #balance availability check!
     ub_order_s = ub_spot_trade(ex, asset, TRADE_SELL, ub_p_krw, t_q_fee, TEST)  #4a. Spot Sell
     bn_order_f = bn_fut_trade(ex, asset, TRADE_BUY, bn_p_usd, t_q_fee, TEST)    #4b. Futures Long
 
