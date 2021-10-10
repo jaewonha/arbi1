@@ -104,9 +104,9 @@ def main():
     #status = 'UB'
     status = 'BN' 
     STATUS_CHANGE = False #only in or only out mode
-    IN_TH = 2.65  #high - in
+    IN_TH = 2.7  #high - in
     OUT_TH = 2.15  #low - out
-    maxUSD = 100
+    maxUSD = 500
     #maxUSD = 1000
     asset = "EOS" #target asset to trade arbi
     IN_TRF_R = 0.9
@@ -144,6 +144,9 @@ def main():
         arbi_check_balace(ex, asset, maxUSD) #opt
         ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset, delay)
 
+        print(f"KIMP[IN] :{kimp[IN]}% (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN] })")
+        print(f"KIMP[OUT]:{kimp[OUT]}% (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
+    
         if status=='BN' and kimp[IN]>(IN_TH*IN_TRF_R):
             log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN]}) @{now}")
             #asset_before = get_asset_total(ex, asset) 

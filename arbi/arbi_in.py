@@ -46,6 +46,7 @@ def wait_kimp_inTh(ex: Exchanges, asset: str, inTh: float):
     cnt = 0
     while True:
         t0 = get_ms()
+        #fixme: fut이 spot보다 좀 더 높아서... 처음에 spot-fut 비율을 가져와야할것같은데..
         bn_p_usd, _  = bn_fut_1st_ask(ex, asset)  #long from futures - ask #ub_spot_1st_ask(..) some times lose
         t1 = get_ms()
         ub_p_krw, _  = ub_spot_1st_bid(ex, asset) #sell spot - bid
