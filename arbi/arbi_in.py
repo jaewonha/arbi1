@@ -51,7 +51,7 @@ def wait_kimp_inTh(ex: Exchanges, asset: str, inTh: float):
         t1 = get_ms()
         ub_p_krw, _  = ub_spot_1st_bid(ex, asset) #sell spot - bid
         t2 = get_ms()
-        log(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_1st_ask({t1-t0}ms), ub_spot_1st_bid({t2-t1}ms)")
+        print(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_1st_ask({t1-t0}ms), ub_spot_1st_bid({t2-t1}ms)")
         ub_p_usd  = round(ub_p_krw / ex.krwPerUsd, 4)
         kimp  = round( (ub_p_usd/bn_p_usd-1)*100,2)
         print(f"[wait_kimp_inTh]({cnt}) kimp({kimp}) > inTh({inTh}) ?")
@@ -72,7 +72,7 @@ def arbi_in_ubSpotSell_bnFutBuy(ex: Exchanges, asset: str, t_q_fee: float, inTh:
     ub_order_s = ub_spot_trade(ex, asset, TRADE_SELL, ub_p_krw, t_q_fee, TEST)  #4a. Spot Sell
     t2 = get_ms()
 
-    log(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_trade({t1-t0}ms), ub_spot_trade({t2-t1}ms)")
+    print(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_trade({t1-t0}ms), ub_spot_trade({t2-t1}ms)")
     ub_wait_order(ex, ub_order_s, TEST)
     bn_wait_order(ex, bn_order_f, BN_FUT, TEST)
 
