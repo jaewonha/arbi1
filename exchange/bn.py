@@ -333,8 +333,9 @@ def bn_get_fut_pending_amt(ex: Exchanges, asset: str)->float:
         gain = gain + (f_p - p) * q
         sum_q = sum_q + q
 
-    if abs(sum_q - f_q) > 0.00000001:
-        log(f"[bn_get_fut_pending_amt]:open orders q mismatch(open orders sum q:{sum_q}, f short q:{f_q})")
+    #when both is running at sametime... count withdraw..? or signaling each other..?
+    #if abs(sum_q - f_q) > 0.00000001:
+        #log(f"[bn_get_fut_pending_amt]:open orders q mismatch(open orders sum q:{sum_q}, f short q:{f_q})")
     
     return gain
 

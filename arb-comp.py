@@ -103,7 +103,7 @@ arbiRanges = []
 # arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 29), pd.datetime(2021, 10, 5), 3.0,  2.3))
 #arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 3), pd.datetime(2021, 10, 5), 2.8,  2.2))
 #arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 10), pd.datetime(2021, 10, 11), 2.35,  1.65))
-arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 10), pd.datetime(2021, 10, 11), 2.35,  1.65))
+arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 10), pd.datetime(2021, 10, 12), 2.65,  2.15))
 
 #crop range
 if False:

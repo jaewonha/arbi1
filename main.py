@@ -104,10 +104,10 @@ def main():
     #status = 'UB'
     status = 'BN' 
     STATUS_CHANGE = False #only in or only out mode
-    IN_TH = 2.35  #high - in
-    OUT_TH = 1.65  #low - out
-    #maxUSD = 50
-    maxUSD = 1000
+    IN_TH = 2.65  #high - in
+    OUT_TH = 2.15  #low - out
+    maxUSD = 100
+    #maxUSD = 1000
     asset = "EOS" #target asset to trade arbi
     IN_TRF_R = 0.9
     ORDER_TEST = False

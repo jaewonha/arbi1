@@ -18,7 +18,7 @@ ex = Exchanges()
 
 lastMin = None
 delay = 1
-asset ='TRX'
+asset ='EOS'
 
 while True:
     now = datetime.now()
