@@ -6,8 +6,12 @@ from util.log import log
 from classes import *
 
 #const
+ASK = 0
+BID = 1
+
 BN_SPOT     = 5010
 BN_FUT      = 5011
+
 TRADE_BUY   = 6010
 TRADE_SELL  = 6011
 
@@ -41,13 +45,20 @@ def bn_get_fut_margin_balance(ex: Exchanges, acc: dict = None):
     asset = acc['assets'][1]
     assert asset['asset'] == 'USDT'
 
-    #float(asset['walletBalance'])
-    #pendingAmt = float(asset['unrealizedProfit'])
-    #if abs(pendingAmt) > 0:
-        #log(f"[bn_get_fut_margin_balance]pendingAmt:{pendingAmt}")
+    #float(asset['walletBalance']) = total net + funding fee - tx fee
+    #float(asset['marginBalance']) = unrealizedProfit applied
+    #float(asset['unrealizedProfit'])
     return float(asset['marginBalance'])
 
-def bn_get_fut_asset_q(ex: Exchanges, asset: str, _type: str):
+def bn_get_fut_wallet_balance(ex: Exchanges, acc: dict = None):
+    acc = ex.binance.futures_account() if acc == None else acc
+    asset = acc['assets'][1]
+    assert asset['asset'] == 'USDT'
+
+    #float(asset['walletBalance']) = total net + funding fee - tx fee
+    return float(asset['walletBalance'])
+
+def bn_get_fut_asset_q(ex: Exchanges, asset: str):
     assert asset == 'EOS'
     EOS_IDX = 67 #fixme: NO IDX or ADD XRP or ETC
     #print('### futures balance ###')
@@ -57,14 +68,7 @@ def bn_get_fut_asset_q(ex: Exchanges, asset: str, _type: str):
     f_p = float(f_eos['entryPrice'])
     f_q = float(f_eos['positionAmt'])
     
-    if _type == FUT_SHORT:
-        assert f_q < 0 #short
-        return -f_q
-    elif _type == FUT_LONG:
-        assert f_q > 0 #long
-        return f_q
-    else:
-        print('unknown type:' + _type)
+    return f_p, f_q
 
 def bn_get_fut_balance(ex: Exchanges, asset: str):
     assert asset == 'EOS'
@@ -82,27 +86,49 @@ def bn_get_fut_balance(ex: Exchanges, asset: str):
 def bn_usdt_pair(asset):
     return asset + 'USDT'
 
+def bn_spot_1st(ex: Exchanges, asset: str): #highest buying bids
+    depth = ex.binance.get_order_book(symbol=bn_usdt_pair(asset))
+
+    a_t_p = round(float(depth['asks'][0][0]), 6)
+    a_av_q = float(depth['asks'][0][1])
+
+    b_t_p = round(float(depth['bids'][0][0]), 6)
+    b_av_q = float(depth['bids'][0][1])
+
+    return [[a_t_p, a_av_q],[b_t_p, b_av_q]]
+
+def bn_fut_1st(ex: Exchanges, asset: str): #highest buying bids
+    depth = ex.binance.futures_order_book(symbol=bn_usdt_pair(asset))
+
+    b_t_p = round(float(depth['bids'][0][0]), 6)
+    b_av_q = float(depth['bids'][0][1])
+    
+    a_t_p = round(float(depth['asks'][0][0]), 6)
+    a_av_q = float(depth['asks'][0][1])
+
+    return [[a_t_p, a_av_q],[b_t_p, b_av_q]]
+
 def bn_spot_1st_bid(ex: Exchanges, asset: str): #highest buying bids
     depth = ex.binance.get_order_book(symbol=bn_usdt_pair(asset))
-    t_p = round(float(depth['bids'][0][0]), 4)
+    t_p = round(float(depth['bids'][0][0]), 6)
     av_q = float(depth['bids'][0][1])
     return t_p, av_q
 
 def bn_spot_1st_ask(ex: Exchanges, asset: str): #lowest selling price
     depth = ex.binance.get_order_book(symbol=bn_usdt_pair(asset))
-    t_p = round(float(depth['asks'][0][0]), 4)
+    t_p = round(float(depth['asks'][0][0]), 6)
     av_q = float(depth['asks'][0][1])
     return t_p, av_q
 
 def bn_fut_1st_bid(ex: Exchanges, asset: str):
     depth = ex.binance.futures_order_book(symbol=bn_usdt_pair(asset))
-    t_p = round(float(depth['bids'][0][0]), 4)
+    t_p = round(float(depth['bids'][0][0]), 6)
     av_q = float(depth['bids'][0][1])
     return t_p, av_q
 
 def bn_fut_1st_ask(ex: Exchanges, asset: str):
     depth = ex.binance.futures_order_book(symbol=bn_usdt_pair(asset))
-    t_p = round(float(depth['asks'][0][0]), 4)
+    t_p = round(float(depth['asks'][0][0]), 6)
     av_q = float(depth['asks'][0][1])
     return t_p, av_q
 
@@ -114,7 +140,6 @@ def bn_get_trade_type(tradeMode: int):
     print(f"bn_get_trade_type:invalide mode={tradeMode}")
     exit(0)
         
-
 def bn_spot_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: float, TEST: bool = True):
     pair = bn_usdt_pair(asset)
     tradeType = bn_get_trade_type(tradeMode)
@@ -282,3 +307,36 @@ def bn_cancel_or_refund(ex: Exchanges, order: dict, mode: int, pair: str, TEST: 
 def bn_get_withdraw_fee(asset):
     assert asset == 'EOS'
     return 0.1
+
+def bn_get_pending_amt(ex: Exchanges, asset: str)->float:
+    #todo:
+    #query pending order by asset
+    #amount t_q *t_p
+    #ret
+    return 0.0
+
+def bn_get_fut_pending_amt(ex: Exchanges, asset: str)->float:
+    f_p, f_q = bn_get_fut_asset_q(ex, asset)
+    assert f_q < 0 #short only
+    f_q = -f_q
+
+    bn_pair = bn_usdt_pair(asset)
+    orders = ex.binance.futures_get_open_orders(symbol=bn_pair)
+    sum_q = 0.0
+    gain = 0.0
+    for order in orders:
+        assert order['symbol'] == bn_pair
+        assert order['side'] == 'BUY'
+        p = float(order['price'])
+        q = float(order['origQty']) - float(order['executedQty'])
+
+        gain = gain + (f_p - p) * q
+        sum_q = sum_q + q
+
+    if abs(sum_q - f_q) > 0.00000001:
+        log(f"[bn_get_fut_pending_amt]:open orders q mismatch(open orders sum q:{sum_q}, f short q:{f_q})")
+    
+    return gain
+
+def bn_is_backward(bnSpot1st, bnFut1st)->bool: #type hint float array
+    return not (bnFut1st[BID][0] > bnSpot1st[ASK][0])

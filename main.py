@@ -1,18 +1,17 @@
-#import pyupbit
-from requests.exceptions import ConnectionError, ReadTimeout
-
-import json
-import pprint
-
-from datetime import datetime
-import time
-
 import signal
 import sys
+
+import numpy as np
+import time
+from datetime import datetime
+from requests.exceptions import ConnectionError, ReadTimeout
 
 from classes import *
 from util.log import *
 from arbi import *
+
+IN = 0
+OUT = 1
 
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
@@ -21,51 +20,104 @@ def signal_handler(sig, frame):
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
-def get_asset_total(ex):
+def get_asset_total(ex: Exchanges, asset: str):
    ub_usd = ub_get_spot_balance(ex, 'KRW') / ex.krwPerUsd
+   ub_pending = bn_get_pending_amt(ex, asset)
+
    bn_usd = bn_get_spot_balance(ex, 'USDT')
-   bn_fut_usd = bn_get_fut_margin_balance(ex)
-   total_usd = ub_usd + bn_usd + bn_fut_usd
-   return [round(ub_usd,2), round(bn_usd,2), round(bn_fut_usd, 2), round(total_usd,2)]
+   bn_pending = bn_get_pending_amt(ex, asset)
+
+   bn_fut_usd = bn_get_fut_wallet_balance(ex)
+   bn_fut_pending = bn_get_fut_pending_amt(ex, asset)
+
+   pending = ub_pending + bn_pending + bn_fut_pending
+   return [round(ub_usd,2), round(bn_usd,2), round(bn_fut_usd,2), round(pending,2)]
 
 def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
-    assetGain = round( (after[2]/before[2]-1)*100, 2 )
+    sum = [np.sum(before), np.sum(after)]
 
-    diff = round(after[2] - before[2],2)
+    assetGain = round((sum[1]/sum[0]-1)*100, 2)
+    diff = round(sum[1]-sum[0], 2)
+
     actualKimp = round((diff/maxUSD)*100, 2)
     kimpGain = round(actualKimp-th, 2)
 
     log(f"[total_asset]ub/bn:"
-        f"[{before[0]} + ({before[1]} + {before[2]}) = {before[3]}] -> "
-        f"[{after[0]} + ({after[1]} + {after[2]}) = {after[3]}]")
+        f"[{before[0]} + ({before[1]} + |{before[2]} + {before[3]}|) = {sum[0]}] -> "
+        f"[{after[0]} + ({after[1]} + |{after[2]} + {after[3]}|) = {sum[1]}]")
     log(f"\tdiff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, "
         f"maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}")
     log_flush()
 
+
+def calc_kimp(ex: Exchanges, asset: str, delay: int = 1):
+    ub_p_krw = [0.0,0.0]
+    ub_p_usd = [0.0,0.0]
+    bn_p_usd = [0.0,0.0]
+    #bn_p_krw = [0.0,0.0]
+    bn_f_usd = [0.0,0.0]
+    kimp     = [0.0,0.0]
+
+    while True:
+        try:
+            bnFut1st  = bn_fut_1st(ex, asset)
+            bnSpot1st = bn_spot_1st(ex, asset)
+            ubSpot1st = ub_spot_1st(ex, asset) #ask=0, bid=1
+            #선물이 백워데이션이면 안정될때까지 기다림
+            if bn_is_backward(bnSpot1st, bnFut1st):
+                log(f"[calc_kimp]Bn Fut BackWard futBid={bnFut1st[BID][0]} > spotAsk={bnSpot1st[ASK]} failed")
+                time.sleep(delay)
+                continue
+            #들어올 때(toUB)
+            bn_p_usd[IN]  = bnSpot1st[ASK][0]   #바이낸스의 Spot을 Buy
+            ub_p_krw[IN]  = ubSpot1st[BID][0]   #업비트의 Spot에 판다
+            bn_f_usd[IN]  = bnFut1st[BID][0]    #Bn Spot Sell
+            #나갈 때(toBN)
+            ub_p_krw[OUT] = ubSpot1st[ASK][0]   #업비트에서 Spot Buy.
+            bn_p_usd[OUT] = bnSpot1st[BID][0]   #바이낸스에서 Spot Sell
+            bn_f_usd[OUT] = bnFut1st[BID][0]    #Bn Spot Sell
+            break;
+        except ReadTimeout as rt:
+            print('[read_market_price] read time out.. retry')
+            time.sleep(delay)
+       
+
+    #conv currency
+    ub_p_usd[IN]  = round(ub_p_krw[IN]  / ex.krwPerUsd, 6)
+    #bn_p_krw[IN]  = round(bn_p_usd[IN]  * ex.krwPerUsd, 6)
+    ub_p_usd[OUT] = round(ub_p_krw[OUT] / ex.krwPerUsd, 6)
+    #bn_p_krw[OUT] = round(bn_p_usd[OUT] * ex.krwPerUsd, 6)
+
+    #print
+    #print(f"[UB]KRW={ub_p_krw}, USD={ub_p_usd}")
+    #print(f"[BN]KRW={bn_p_krw}, USD={bn_p_usd}")
+    kimp[IN]  = round( (ub_p_usd[IN]/bn_p_usd[IN]-1)*100, 2)
+    kimp[OUT] = round( (ub_p_usd[OUT]/bn_p_usd[OUT]-1)*100, 2)
+
+    return ub_p_krw, ub_p_usd, bn_f_usd, kimp 
+
+def toUsd(ex: Exchanges, krw: float):
+    return round(krw/ex.krwPerUsd,6)
+
 def main():
     #config
-    # status = 'UB'
-    # OUT_TH = 2.0
-    # IN_TH = 3.5
-    status = 'UB'
-    #status = 'UB' 
-    IN_TH = 2.45  #high - in
-    OUT_TH = 1.9  #low - out
-    IN_TRF_R = 0.9
+    #status = 'UB'
+    status = 'BN' 
+    STATUS_CHANGE = False #only in or only out mode
+    IN_TH = 2.35  #high - in
+    OUT_TH = 1.65  #low - out
     #maxUSD = 50
     maxUSD = 1000
     asset = "EOS" #target asset to trade arbi
-    #print(f"config: asset={asset}, OUT_TH={OUT_TH}, IN_TH={IN_TH}")
+    IN_TRF_R = 0.9
     ORDER_TEST = False
-    ARBI_SEQ_TEST = False
 
     ex = Exchanges()
-
-    date = datetime.now().strftime("%Y%m%d_%H%M%S")
-    #f = open(f"kimp{date}.txt", "a")
-    log_open("log.txt")
-    log(date)
-
+    
+    log_open('log.txt')
+    log(f"date:{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+    log(f"config: asset={asset}, status={status} STATUS_CHANGE={STATUS_CHANGE} OUT_TH={OUT_TH}, IN_TH={IN_TH}")
+    
     if ORDER_TEST:
         print('test order')
     else:
@@ -76,11 +128,10 @@ def main():
             print('not go')
             exit(0)
 
-    lastMin = None
     cnt = 0
     delay = 2
-    SKIP_STATUS_CHECK = True
-
+    lastMin = None
+    
     while True:
         now = datetime.now()
         if now.minute != lastMin:
@@ -89,67 +140,31 @@ def main():
             print(f"update krwPerUsd:{ex.krwPerUsd} at min:{lastMin}")
             log_flush()
 
-        ub_pair = ub_krw_pair(asset)
-        bn_pair = bn_usdt_pair(asset)
-        
-        #get price
-        IN = 0
-        OUT = 1
-        ub_p_krw = [0.0,0.0]
-        ub_p_usd = [0.0,0.0]
-        bn_p_usd = [0.0,0.0]
-        bn_p_krw = [0.0,0.0]
-        kimp     = [0.0,0.0]
+        asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
+        arbi_check_balace(ex, asset, maxUSD) #opt
+        ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset, delay)
 
-        if True: #strict
-            try:
-                bn_p_usd[IN], _  = bn_spot_1st_ask(ex, asset) #market 
-                ub_p_krw[IN], _  = ub_spot_1st_bid(asset)          #market
-                ub_p_krw[OUT], _ = ub_spot_1st_ask(asset)          #market
-                bn_p_usd[OUT], _ = bn_spot_1st_bid(ex, asset) #market 
-            except ReadTimeout as rt:
-                print('[read_market_price] read time out.. retry')
-                time.sleep(delay)
-            except Exception as e:
-                print('[read_market_price] error.. retry:' + str(e))
-                time.sleep(delay)
-        else: #use native api
-            ub_p_krw[IN] = ub_p_krw[OUT] = ex.pyupbit.get_current_price(ub_pair)
-            bn_p_usd[IN] = bn_p_usd[OUT] = ex.binance.get_symbol_ticker(symbol=bn_pair)["price"]
-        
-        #conv currency
-        ub_p_usd[IN]  = round(ub_p_krw[IN]  / ex.krwPerUsd, 4)
-        bn_p_krw[IN]  = round(bn_p_usd[IN]  * ex.krwPerUsd, 4)
-        ub_p_usd[OUT] = round(ub_p_krw[OUT] / ex.krwPerUsd, 4)
-        bn_p_krw[OUT] = round(bn_p_usd[OUT] * ex.krwPerUsd, 4)
-
-        #print
-        #print(f"[UB]KRW={ub_p_krw}, USD={ub_p_usd}")
-        #print(f"[BN]KRW={bn_p_krw}, USD={bn_p_usd}")
-        kimp[IN]  = round( (ub_p_usd[IN]/bn_p_usd[IN]-1)*100,2)
-        kimp[OUT] = round( (ub_p_usd[OUT]/bn_p_usd[OUT]-1)*100,2)
-        print(f"KIMP[IN] :{kimp[IN] }% (UB={ub_p_usd[IN] }, BN={bn_p_usd[IN] })")
-        print(f"KIMP[OUT]:{kimp[OUT]}% (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
-        
-        if (SKIP_STATUS_CHECK or status=='BN') and (kimp[IN]>(IN_TH*IN_TRF_R) or ARBI_SEQ_TEST):
-            log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={ub_p_usd[IN]}, BN={bn_p_usd[IN]}) @{now}")
-            asset_before = get_asset_total(ex)
-            if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], maxUSD, IN_TH, ORDER_TEST):
+        if status=='BN' and kimp[IN]>(IN_TH*IN_TRF_R):
+            log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN]}) @{now}")
+            #asset_before = get_asset_total(ex, asset) 
+            log(f"(temp)asset_before:{asset_before}")
+            if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD, IN_TH, ORDER_TEST, True):
                 cnt = cnt + 1
-                status = 'UB'
-                asset_after = get_asset_total(ex)
+                if STATUS_CHANGE: status = 'UB'
+                asset_after = get_asset_total(ex, asset)
                 print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
 
-        elif (SKIP_STATUS_CHECK or status=='UB') and (kimp[OUT]<OUT_TH or ARBI_SEQ_TEST):
-            log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={ub_p_usd[OUT]}, BN={bn_p_usd[OUT]}) @{now}")
-            asset_before = get_asset_total(ex)
-            if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_p_usd[OUT], maxUSD, ORDER_TEST):
+        elif status=='UB' and kimp[OUT]<OUT_TH:
+            log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) @{now}")
+            #asset_before = get_asset_total(ex, asset)
+            log(f"(temp)asset_before:{asset_before}")
+            if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD, ORDER_TEST, True):
                 cnt = cnt + 1
-                status = 'BN'
-                asset_after = get_asset_total(ex)
+                if STATUS_CHANGE: status = 'BN'
+                asset_after = get_asset_total(ex, asset)
                 print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
         
-        if cnt > 10:
+        if cnt > 5:
             print(f"cnt{cnt} exit")
             exit(0)
         time.sleep(delay)

@@ -28,7 +28,17 @@ def ub_wait_balance(ex: Exchanges, asset: str, t_q: float):
 def ub_krw_pair(asset: str):
     return 'KRW-' + asset
 
-def ub_spot_1st_bid(asset: str): #highest buying bids
+def ub_spot_1st(ex: Exchanges, asset: str): #highest buying bids
+    orderMeta = pyupbit.get_orderbook(tickers=ub_krw_pair(asset))[0]
+    orderBook = orderMeta['orderbook_units']
+    od_1st = orderBook[0]
+    a_t_p = od_1st['ask_price']
+    a_av_q = od_1st['ask_size']
+    b_t_p = od_1st['bid_price']
+    b_av_q = od_1st['bid_size']
+    return [[a_t_p, a_av_q],[b_t_p, b_av_q]]
+
+def ub_spot_1st_bid(ex: Exchanges, asset: str): #highest buying bids
     orderMeta = pyupbit.get_orderbook(tickers=ub_krw_pair(asset))[0]
     orderBook = orderMeta['orderbook_units']
     od_1st = orderBook[0]
@@ -36,7 +46,7 @@ def ub_spot_1st_bid(asset: str): #highest buying bids
     av_q = od_1st['bid_size']
     return t_p, av_q
 
-def ub_spot_1st_ask(asset: str): #lowest selling price
+def ub_spot_1st_ask(ex: Exchanges, asset: str): #lowest selling price
     orderMeta = pyupbit.get_orderbook(tickers=ub_krw_pair(asset))[0]
     orderBook = orderMeta['orderbook_units']
     od_1st = orderBook[0]
@@ -141,6 +151,14 @@ def ub_wait_order(ex: Exchanges, order: dict, TEST: bool)->None:
             break
 
         time.sleep(1)
+
+def ub_get_pending_amt(ex: Exchanges, asset: str)->float:
+    #todo:
+    #query pending order by asset
+    #amount t_q *t_p
+    #ret
+    return 0.0
+
 '''
 def ub_cancel_or_refund(client, order, TEST):
     for i in itertools.count():

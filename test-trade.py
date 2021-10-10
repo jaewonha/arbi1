@@ -17,13 +17,13 @@ BN_TEST = False
 
 if UB_TEST:
     try:
-        t_p, av_q = ub_spot_1st_ask(asset) #ask
+        t_p, av_q = ub_spot_1st_ask(ex, asset) #ask
         order = ub_spot_trade(ex, asset, TRADE_BUY, t_p, t_q, TEST)
 
         ub_wait_order(ex, order, TEST)
         time.sleep(3)
 
-        t_p, av_q = ub_spot_1st_bid(asset) #bid
+        t_p, av_q = ub_spot_1st_bid(ex, asset) #bid
         order = ub_spot_trade(ex, asset, TRADE_SELL, t_p, t_q, TEST)
 
         ub_wait_order(ex, order, TEST)

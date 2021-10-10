@@ -22,3 +22,12 @@ During handling of the above exception, another exception occurred:
 -->trade중에만 복구코드... 어렵.. ㅜㅜ
 -->일단 집적트레이드해야.. kimp alert -> program manual execution?
 -->날아간것만 다시 트레이드 하는 코드 넣기.
+
+
+#시간이 너무 오래 걸려서 async로 변환 필요. 
+(0)ub_wait_deposit: state=ACCEPTED
+[arbi_in_ubSpotSell_bnFutBuy] bn_fut_1st_ask(94ms), ub_spot_1st_bid(37ms)
+[wait_kimp_inTh](0) kimp(2.01) > inTh(0.0) ?
+[bn_fut_BUY]EOSUSDT 4.0q @ 4.877$, TEST=False
+[ub_spot_sell]KRW-EOS 4.0q @ 5950.0W(4.9749$), TEST=False
+[arbi_in_ubSpotSell_bnFutBuy] bn_fut_trade(54ms), ub_spot_trade(111ms)

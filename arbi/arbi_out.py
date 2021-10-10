@@ -3,7 +3,7 @@ from exchange import *
 from util.math import *
 from arbi.arbi_common import *
 
-def arbi_out_unSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn_p_usd: float, maxUSD: float, TEST: bool):
+def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn_f_usd: float, maxUSD: float, TEST: bool):
     #t_p, av_q = ub_spot_1st_ask(asset) #market
     #t_p = 5730 #fixed
     maxKRW = maxUSD*ex.krwPerUsd
@@ -14,7 +14,8 @@ def arbi_out_unSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn
     ub_wait_order(ex, ub_order, TEST)
 
     # #2b. Futures Short
-    f_t_p, f_av_q = wait_bn_future_settle(ex, asset, bn_p_usd)
+    #f_t_p, f_av_q = wait_bn_future_settle(ex, asset, bn_p_usd)
+    f_t_p = bn_f_usd #assume fut price is used calc kimp
 
     bn_order = bn_fut_trade(ex, asset, TRADE_SELL, f_t_p, t_q, TEST)
     bn_wait_order(ex, bn_order, BN_FUT, TEST)
@@ -57,12 +58,19 @@ def arbi_out_bnSpotSell_bnFutBuy(ex: Exchanges, asset: str, t_q: float, TEST):
     #ub_p_krw, bn_p_usd = wait_kimp_outTh(binance, bn_pair, ub_pair, krwPerUsd, outTh) #ensure target kimp is maintained
 
     #4a. Spot Sell
-    t_p, av_q = bn_spot_1st_bid(ex, asset) #market
+    bnSpot1st = bn_spot_1st(ex, asset)
+    #t_p, av_q = bn_spot_1st_bid(ex, asset) #market
+    t_p = bnSpot1st[BID][0]
     bn_order_s = bn_spot_trade(ex, asset, TRADE_SELL, t_p, t_q, TEST)
 
     #4b. Futures Long
-    f_t_p, f_av_q = bn_fut_1st_ask(ex, asset)
+    #f_t_p, f_av_q = bn_fut_1st_ask(ex, asset)
+    bnFut1st = bn_fut_1st(ex, asset)
+    f_t_p = bnFut1st[ASK][0]
     bn_order_f = bn_fut_trade(ex, asset, TRADE_BUY, f_t_p, t_q, TEST)
 
+    if bn_is_backward(bnSpot1st, bnFut1st):
+        log(f"[arbi_out_bnSpotSell_bnFutBuy]Traded at BackWard!: futBid={bnFut1st[1][0]} > spotAsk={bnSpot1st[0]} failed")
+                
     bn_wait_order(ex, bn_order_s, BN_SPOT, TEST)
     bn_wait_order(ex, bn_order_f, BN_FUT, TEST)

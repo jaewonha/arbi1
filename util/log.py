@@ -4,7 +4,7 @@ fp = None
 
 def log_open(path):
     global fp
-    fp = open(f"log.txt", "a")
+    fp = open(path, "a")
 
 def log_flush():
     if fp:

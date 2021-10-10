@@ -1,5 +1,5 @@
 from datetime import datetime, date, timedelta
-
+import time
 def utc_to_str(utc_ts_bn, div1000=False, forGraph=False):
     if div1000:
         ts = int(utc_ts_bn)/1000
@@ -11,3 +11,5 @@ def utc_to_str(utc_ts_bn, div1000=False, forGraph=False):
     else:
         return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         
+def get_ms():
+    return round(time.time() * 1000)

@@ -3,22 +3,26 @@ from upbit.client import Upbit
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 from classes import *
 from conv.krw2usd import krw_per_usd
+import json
 
 class Exchanges:
     #def __init__(self, pyupbit: PyUpbit, upbitClient: UpbitClient, binance: Binance):
     def __init__(self):
+        f = open('.key.ini','r')
+        keyJson = json.load(f)
         #UB - tradable
-        access = "p2uhQ8xdqxhEvslccOPkwzreXiuTWysaNTcYigWq"
-        secret = "k55DdoFw2sPRSYGMzB4IzwNna7ywPHYj1562QykN"
+        access = keyJson['upbit']['accKey']
+        secret = keyJson['upbit']['secKey']
         self.pyupbit = pyupbit.Upbit(access, secret)
         self.upbitClient = Upbit(access, secret)
 
         #BN - tadable
-        api_key = 'xc88zHqhZjLhTlYLlHRy2k30tKVVEV3oZq2GodtGP8gQloThM2R1KfMMED4goG3c'
-        sec_key = 'xzZ8D5qiSXCIJgirSSbD9fLqVFkjcDIHgms17j1u1SwdklCEClSSjqbRk83ZRmO1'
+        api_key = keyJson['binance']['apiKey']
+        sec_key = keyJson['binance']['secKey']
         self.binance = Client(api_key, sec_key)
 
         self.updateCurrency()
+        f.close()
 
     def updateCurrency(self):
         self.krwPerUsd: float= float(krw_per_usd())
