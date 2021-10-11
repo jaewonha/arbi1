@@ -317,7 +317,7 @@ def bn_get_pending_amt(ex: Exchanges, asset: str)->float:
 
 def bn_get_fut_pending_amt(ex: Exchanges, asset: str)->float:
     f_p, f_q = bn_get_fut_asset_q(ex, asset)
-    assert f_q < 0 #short only
+    assert not f_q > 0 #short only
     f_q = -f_q
 
     bn_pair = bn_usdt_pair(asset)
@@ -340,4 +340,4 @@ def bn_get_fut_pending_amt(ex: Exchanges, asset: str)->float:
     return gain
 
 def bn_is_backward(bnSpot1st, bnFut1st)->bool: #type hint float array
-    return not (bnFut1st[BID][0] > bnSpot1st[ASK][0])
+    return bnFut1st[BID][0] < bnSpot1st[ASK][0]

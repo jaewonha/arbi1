@@ -70,7 +70,7 @@ def arbi_out_bnSpotSell_bnFutBuy(ex: Exchanges, asset: str, t_q: float, TEST):
     bn_order_f = bn_fut_trade(ex, asset, TRADE_BUY, f_t_p, t_q, TEST)
 
     if bn_is_backward(bnSpot1st, bnFut1st):
-        log(f"[arbi_out_bnSpotSell_bnFutBuy]Traded at BackWard!: futBid={bnFut1st[1][0]} > spotAsk={bnSpot1st[0]} failed")
+        print(f"[arbi_out_bnSpotSell_bnFutBuy]Traded at BackWard!: futBid={bnFut1st[1][0]} > spotAsk={bnSpot1st[0][0]} failed")
                 
     bn_wait_order(ex, bn_order_s, BN_SPOT, TEST)
     bn_wait_order(ex, bn_order_f, BN_FUT, TEST)

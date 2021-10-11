@@ -65,7 +65,7 @@ def calc_kimp(ex: Exchanges, asset: str, delay: int = 1):
             ubSpot1st = ub_spot_1st(ex, asset) #ask=0, bid=1
             #선물이 백워데이션이면 안정될때까지 기다림
             if bn_is_backward(bnSpot1st, bnFut1st):
-                log(f"[calc_kimp]Bn Fut BackWard futBid={bnFut1st[BID][0]} > spotAsk={bnSpot1st[ASK]} failed")
+                print(f"[calc_kimp]Bn Fut BackWard futBid={bnFut1st[BID][0]} > spotAsk={bnSpot1st[ASK][0]} failed")
                 time.sleep(delay)
                 continue
             #들어올 때(toUB)
@@ -101,13 +101,13 @@ def toUsd(ex: Exchanges, krw: float):
 
 def main():
     #config
-    #status = 'UB'
-    status = 'BN' 
+    status = 'UB'
+    #status = 'BN' 
     STATUS_CHANGE = False #only in or only out mode
-    IN_TH = 2.7  #high - in
-    OUT_TH = 2.15  #low - out
-    maxUSD = 500
-    #maxUSD = 1000
+    IN_TH = 4.0  #high - in
+    OUT_TH = 2.0  #low - out
+    #maxUSD = 500
+    maxUSD = 2000
     asset = "EOS" #target asset to trade arbi
     IN_TRF_R = 0.9
     ORDER_TEST = False
@@ -166,7 +166,8 @@ def main():
                 if STATUS_CHANGE: status = 'BN'
                 asset_after = get_asset_total(ex, asset)
                 print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
-        
+                OUT_TH = OUT_TH - 0.1
+                
         if cnt > 5:
             print(f"cnt{cnt} exit")
             exit(0)

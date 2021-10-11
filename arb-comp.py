@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib
 #from pylab import get_current_fig_manager
 import matplotlib.pyplot as plt
-#import mplcursors #pip install plotly
+import mplcursors #pip install mplcursors
 import numpy as np
 import math
 import datetime as dt
@@ -103,7 +103,7 @@ arbiRanges = []
 # arbiRanges.append(ArbiRange(pd.datetime(2021, 9, 29), pd.datetime(2021, 10, 5), 3.0,  2.3))
 #arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 3), pd.datetime(2021, 10, 5), 2.8,  2.2))
 #arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 10), pd.datetime(2021, 10, 11), 2.35,  1.65))
-arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 10), pd.datetime(2021, 10, 12), 2.65,  2.15))
+arbiRanges.append(ArbiRange(pd.datetime(2021, 10, 10), pd.datetime(2021, 10, 12), 4,  3.25))
 
 #crop range
 if False:
@@ -328,6 +328,8 @@ days = 60*60*24 / float(secs)
 print(f"total gain%:{gain}")
 print(f"days:{days}")
 print(f"APR%:{round(gain/days*365.0,2)}")
+
+mplcursors.cursor(hover=True)
 plt.show()
 
 
