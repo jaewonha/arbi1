@@ -117,8 +117,8 @@ def main():
     status = 'BN' 
     STATUS_CHANGE = False #only in or only out mode
     STATUS_SKIP = True
-    IN_TH = 5  #high - in
-    OUT_TH = 2.4  #low - out
+    IN_TH = 4.5  #high - in
+    OUT_TH = 2.6  #low - out
     #maxUSD = 500
     maxUSD = 4000
     asset = "EOS" #target asset to trade arbi
@@ -170,7 +170,7 @@ def main():
                 #asset_after = get_asset_total(ex, asset)
                 #print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
                 log_asset_total(ex, asset)
-                IN_TH = IN_TH + 0.1
+                IN_TH = IN_TH + 0.25
 
         elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH:
             log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) @{now}")
