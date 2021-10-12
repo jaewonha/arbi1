@@ -22,9 +22,10 @@ from conv.krw2usd import krw_per_usd
 from classes.ArbiRange import ArbiRange
 from util.time import *
     
-days = 1
-bn_pair = 'EOSUSDT'
-
+days = 7
+asset  = 'BTC'
+bn_pair = asset + 'USDT'
+ub_pair = "KRW-" + asset
 krwPerUsd = krw_per_usd()
 if True: #True: force new download, False: use cached csv file
     client = Client()
@@ -44,7 +45,7 @@ if True: #True: force new download, False: use cached csv file
     df_bn = pd.DataFrame(klines2, columns=['ts','open','high','low','close']).set_index('ts')
     #df.to_csv('BN-'+symbol+'-'+str(days)+'d.csv')
 
-    df_ub = pyupbit.get_ohlcv("KRW-EOS", count=24*60*days, interval="minute1")
+    df_ub = pyupbit.get_ohlcv(ub_pair, count=24*60*days, interval="minute1")
     #df_ub = pyupbit.get_ohlcv("KRW-EOS", count=24*days, interval="minute60")
     #df.to_csv('UB-KRW-EOS-'+str(days)+'d.csv')
 
