@@ -118,9 +118,9 @@ def main():
     STATUS_CHANGE = False #only in or only out mode
     STATUS_SKIP = True
     IN_TH = 4.5  #high - in
-    OUT_TH = 2.6  #low - out
+    OUT_TH = 2.65  #low - out
     #maxUSD = 500
-    maxUSD = 4000
+    maxUSD = 8000
     asset = "EOS" #target asset to trade arbi
     IN_TRF_R = 0.9
     ORDER_TEST = False
@@ -145,6 +145,7 @@ def main():
     delay = 2
     lastMin = None
     
+    log_asset_total(ex, asset)
     while True:
         now = datetime.now()
         if now.minute != lastMin:
@@ -164,7 +165,7 @@ def main():
             log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN]}) @{now}")
             #asset_before = get_asset_total(ex, asset) 
             #log(f"(temp)asset_before:{asset_before}")
-            if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD, IN_TH, ORDER_TEST, True):
+            if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD/2, IN_TH, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'UB'
                 #asset_after = get_asset_total(ex, asset)

@@ -80,7 +80,7 @@ def bn_get_fut_balance(ex: Exchanges, asset: str):
     leverage = float(f_eos['leverage'])
     marginBalance = bn_get_fut_margin_balance(ex, acc)
 
-    return marginBalance*leverage*0.8 #safe 10%
+    return marginBalance*leverage*0.8 #safe 20%
 
 
 def bn_usdt_pair(asset):

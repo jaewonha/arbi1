@@ -27,7 +27,7 @@ def check_fee_bnb(ex: Exchanges, maxUSD: float)->bool:
     bnb_q = bn_get_spot_balance(ex, 'BNB') 
     bnb_price = float(ex.binance.get_symbol_ticker(symbol='BNBUSDT')['price'])
     bnb_usdt = bnb_q * bnb_price
-    feeUSDT = maxUSD * (0.0010 + 0.0004*2 + 0.03) #spot fee + future fee 2x + pad
+    feeUSDT = maxUSD * (0.0010 + 0.0004*2 + 0.0010) #spot fee + future fee 2x + pad
     if bnb_usdt < feeUSDT: 
         print(f"insufficient bnbUSDT: {bnb_usdt} < {feeUSDT}")
         return False
