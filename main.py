@@ -34,8 +34,9 @@ def get_asset_total(ex: Exchanges, asset: str):
    return [round(ub_usd,2), round(bn_usd,2), round(bn_fut_usd,2), round(pending,2)]
 
 def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
-    sum = [np.sum(before), np.sum(after)]
+    if before is None: before = after
 
+    sum = [np.sum(before), np.sum(after)]
     assetGain = round((sum[1]/sum[0]-1)*100, 2)
     diff = round(sum[1]-sum[0], 2)
 
@@ -103,6 +104,13 @@ def calc_kimp(ex: Exchanges, asset: str, delay: int = 1):
 def toUsd(ex: Exchanges, krw: float):
     return round(krw/ex.krwPerUsd,6)
 
+def log_asset_total(ex: Exchanges, asset: str):
+    asset_total = get_asset_total(ex, asset) #opt. before calc KIMP
+    log(
+        f"[{datetime.now().strftime('%Y%m%d_%H%M%S')}]"
+        f"balance:{asset_total}=>{round(np.sum(asset_total),2)}"
+    )
+
 def main():
     #config
     #status = 'UB'
@@ -110,7 +118,7 @@ def main():
     STATUS_CHANGE = False #only in or only out mode
     STATUS_SKIP = True
     IN_TH = 5  #high - in
-    OUT_TH = 2.15  #low - out
+    OUT_TH = 2.4  #low - out
     #maxUSD = 500
     maxUSD = 4000
     asset = "EOS" #target asset to trade arbi
@@ -145,7 +153,7 @@ def main():
             print(f"update krwPerUsd:{ex.krwPerUsd} at min:{lastMin}")
             log_flush()
 
-        asset_before = None #asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
+        #asset_before = None #asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
         arbi_check_balace(ex, asset, maxUSD) #opt
         ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset, delay)
 
@@ -159,8 +167,9 @@ def main():
             if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD, IN_TH, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'UB'
-                asset_after = get_asset_total(ex, asset)
-                print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
+                #asset_after = get_asset_total(ex, asset)
+                #print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
+                log_asset_total(ex, asset)
                 IN_TH = IN_TH + 0.1
 
         elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH:
@@ -170,8 +179,9 @@ def main():
             if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'BN'
-                asset_after = get_asset_total(ex, asset)
-                print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
+                #asset_after = get_asset_total(ex, asset)
+                #print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
+                log_asset_total(ex, asset)
                 OUT_TH = OUT_TH - 0.1
 
         if cnt > 5:

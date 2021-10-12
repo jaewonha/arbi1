@@ -2316,3 +2316,25 @@ config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.35, IN_TH=3.3
 (temp)asset_before:[46419.29, 5720.0, 2036.71, 0.0]
 [bn_spot_BUY]EOSUSDT 444.4q @ 4.5$, TEST=False
 [bn_fut_SELL]EOSUSDT 444.3q @ 4.4$, TEST=False
+date:20211012_140538
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.5, IN_TH=5
+date:20211012_140723
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.5, IN_TH=5
+date:20211012_141744
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.5, IN_TH=5
+date:20211012_142859
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.5, IN_TH=5
+date:20211012_143003
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.5, IN_TH=5
+>>> time to flight(UB->BN)! kimp=2.49 (UB=4.529922, BN=4.529922) @2021-10-12 14:51:14.488387
+[ub_spot_buy]KRW-EOS 883.0q @ 5435.0W(4.5299$), TEST=False
+[bn_fut_SELL]EOSUSDT 883.0q @ 4.421$, TEST=False
+[bn_spot_SELL]EOSUSDT 883.0q @ 4.422$, TEST=False
+[bn_fut_BUY]EOSUSDT 883.0q @ 4.423$, TEST=False
+[total_asset]ub/bn:[42417.37 + (8147.0 + |1540.45 + 0.0|) = 52104.82] -> [42417.37 + (8147.0 + |1540.45 + 0.0|) = 52104.82]
+	diff=0.0$, a_kimp=0.0%, kimpGain=2.5%, maxUSD=4000$, assetGain=0.0%, krwPerUsd=1199.8
+date:20211012_173508
+balance:[42427.98, 8147.0, 1540.65, 0.0]=>52115.630000000005
+[20211012_173649]balance:[42427.98, 8147.0, 1540.65, 0.0]=>52115.63
+date:20211012_174128
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.4, IN_TH=5
