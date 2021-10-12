@@ -54,7 +54,7 @@ def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
     log_flush()
 
 
-def calc_kimp(ex: Exchanges, asset: str, delay: int = 1, CHECK_BACKWARD = True):
+def calc_kimp(ex: Exchanges, asset: str, maxUSD: float = 1000000000, CHECK_BACKWARD = True):
     ub_p_krw = [0.0,0.0]
     ub_p_usd = [0.0,0.0]
     bn_p_usd = [0.0,0.0]
@@ -70,7 +70,7 @@ def calc_kimp(ex: Exchanges, asset: str, delay: int = 1, CHECK_BACKWARD = True):
             #선물이 백워데이션이면 안정될때까지 기다림
             if bn_is_backward(bnSpot1st, bnFut1st) and CHECK_BACKWARD:
                 print(f"[calc_kimp]Bn Fut BackWard futBid={bnFut1st[BID][0]} > spotAsk={bnSpot1st[ASK][0]} failed")
-                time.sleep(delay)
+                time.sleep(1)
                 continue
             #들어올 때(toUB)
             bn_p_usd[IN]  = bnSpot1st[ASK][0]   #바이낸스의 Spot을 Buy
@@ -83,7 +83,7 @@ def calc_kimp(ex: Exchanges, asset: str, delay: int = 1, CHECK_BACKWARD = True):
             break;
         except ReadTimeout as rt:
             print('[read_market_price] read time out.. retry')
-            time.sleep(delay)
+            time.sleep(1)
        
 
     #conv currency
@@ -147,7 +147,7 @@ def main():
 
         asset_before = None #asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
         arbi_check_balace(ex, asset, maxUSD) #opt
-        ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset, delay)
+        ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset)
 
         print(f"KIMP[IN] :{kimp[IN]}% (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN] })")
         print(f"KIMP[OUT]:{kimp[OUT]}% (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
