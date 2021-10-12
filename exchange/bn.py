@@ -42,8 +42,8 @@ def bn_wait_balance(ex: Exchanges, asset: str, t_q: float):
 
 def bn_get_fut_margin_balance(ex: Exchanges, acc: dict = None):
     acc = ex.binance.futures_account() if acc == None else acc
-    asset = acc['assets'][1]
-    assert asset['asset'] == 'USDT'
+    asset = acc['assets'][3]
+    assert asset['asset'] == 'USDT' #fixme
 
     #float(asset['walletBalance']) = total net + funding fee - tx fee
     #float(asset['marginBalance']) = unrealizedProfit applied
@@ -52,7 +52,7 @@ def bn_get_fut_margin_balance(ex: Exchanges, acc: dict = None):
 
 def bn_get_fut_wallet_balance(ex: Exchanges, acc: dict = None):
     acc = ex.binance.futures_account() if acc == None else acc
-    asset = acc['assets'][1]
+    asset = acc['assets'][3]
     assert asset['asset'] == 'USDT'
 
     #float(asset['walletBalance']) = total net + funding fee - tx fee

@@ -7,6 +7,7 @@ def arbi_check_balace(ex: Exchanges, asset:str, maxUSD: float):
     assert check_fee_bnb(ex, maxUSD)
     assert check_bn_balance(ex, maxUSD)
     assert check_bn_fut_balance(ex, asset, maxUSD)
+    
 def arbi_in_bn_to_ub(ex: Exchanges, asset: str, bn_p_usd: float, bn_f_usd: float, maxUSD: float, inTh: float, TEST: bool =True, BALANCED_CHEKED: bool =False):
     #1. check balance
     if not BALANCED_CHEKED:
