@@ -50,7 +50,7 @@ def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
     log_flush()
 
 
-def calc_kimp(ex: Exchanges, asset: str, delay: int = 1):
+def calc_kimp(ex: Exchanges, asset: str, delay: int = 1, CHECK_BACKWARD = True):
     ub_p_krw = [0.0,0.0]
     ub_p_usd = [0.0,0.0]
     bn_p_usd = [0.0,0.0]
@@ -64,7 +64,7 @@ def calc_kimp(ex: Exchanges, asset: str, delay: int = 1):
             bnSpot1st = bn_spot_1st(ex, asset)
             ubSpot1st = ub_spot_1st(ex, asset) #ask=0, bid=1
             #선물이 백워데이션이면 안정될때까지 기다림
-            if bn_is_backward(bnSpot1st, bnFut1st):
+            if bn_is_backward(bnSpot1st, bnFut1st) and CHECK_BACKWARD:
                 print(f"[calc_kimp]Bn Fut BackWard futBid={bnFut1st[BID][0]} > spotAsk={bnSpot1st[ASK][0]} failed")
                 time.sleep(delay)
                 continue
