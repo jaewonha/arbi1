@@ -2296,3 +2296,23 @@ date:20211011_172850
 config: asset=EOS, status=UB STATUS_CHANGE=False OUT_TH=2.0, IN_TH=4.0
 date:20211011_175536
 config: asset=EOS, status=UB STATUS_CHANGE=False OUT_TH=2.0, IN_TH=4.0
+date:20211011_205256
+config: asset=EOS, status=UB STATUS_CHANGE=False OUT_TH=2.25, IN_TH=3.0
+date:20211011_221117
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.25, IN_TH=4.0
+date:20211011_221153
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.25, IN_TH=4.0
+date:20211012_020558
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.25, IN_TH=4.0
+date:20211012_021154
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.25, IN_TH=4.0
+date:20211012_021349
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.25, IN_TH=3.5
+date:20211012_100610
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.35, IN_TH=3.3
+date:20211012_101307
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.35, IN_TH=3.3
+<<< time to get-in(BN->UB)! kimp=3.11 (UB=4.588265, BN=4.588265) @2021-10-12 10:13:16.225973
+(temp)asset_before:[46419.29, 5720.0, 2036.71, 0.0]
+[bn_spot_BUY]EOSUSDT 444.4q @ 4.5$, TEST=False
+[bn_fut_SELL]EOSUSDT 444.3q @ 4.4$, TEST=False

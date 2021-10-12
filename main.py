@@ -42,9 +42,13 @@ def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
     actualKimp = round((diff/maxUSD)*100, 2)
     kimpGain = round(actualKimp-th, 2)
 
-    log(f"[total_asset]ub/bn:"
-        f"[{before[0]} + ({before[1]} + |{before[2]} + {before[3]}|) = {sum[0]}] -> "
-        f"[{after[0]} + ({after[1]} + |{after[2]} + {after[3]}|) = {sum[1]}]")
+    if before:
+        log(f"[total_asset]ub/bn:"
+            f"[{before[0]} + ({before[1]} + |{before[2]} + {before[3]}|) = {sum[0]}] -> "
+            f"[{after[0]} + ({after[1]} + |{after[2]} + {after[3]}|) = {sum[1]}]")
+    else:
+        assetGain = -999.0
+
     log(f"\tdiff={diff}$, a_kimp={actualKimp}%, kimpGain={kimpGain}%, "
         f"maxUSD={maxUSD}$, assetGain={assetGain}%, krwPerUsd={krwPerUsd}")
     log_flush()
@@ -86,7 +90,7 @@ def calc_kimp(ex: Exchanges, asset: str, delay: int = 1):
     ub_p_usd[IN]  = round(ub_p_krw[IN]  / ex.krwPerUsd, 6)
     #bn_p_krw[IN]  = round(bn_p_usd[IN]  * ex.krwPerUsd, 6)
     ub_p_usd[OUT] = round(ub_p_krw[OUT] / ex.krwPerUsd, 6)
-    #bn_p_krw[OUT] = round(bn_p_usd[OUT] * ex.krwPerUsd, 6)
+    #bn_p_krw[OUT] = arb-compround(bn_p_usd[OUT] * ex.krwPerUsd, 6)
 
     #print
     #print(f"[UB]KRW={ub_p_krw}, USD={ub_p_usd}")
@@ -101,13 +105,14 @@ def toUsd(ex: Exchanges, krw: float):
 
 def main():
     #config
-    status = 'UB'
-    #status = 'BN' 
+    #status = 'UB'
+    status = 'BN' 
     STATUS_CHANGE = False #only in or only out mode
-    IN_TH = 4.0  #high - in
-    OUT_TH = 2.0  #low - out
+    STATUS_SKIP = True
+    IN_TH = 5  #high - in
+    OUT_TH = 2.15  #low - out
     #maxUSD = 500
-    maxUSD = 2000
+    maxUSD = 4000
     asset = "EOS" #target asset to trade arbi
     IN_TRF_R = 0.9
     ORDER_TEST = False
@@ -140,34 +145,35 @@ def main():
             print(f"update krwPerUsd:{ex.krwPerUsd} at min:{lastMin}")
             log_flush()
 
-        asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
+        asset_before = None #asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
         arbi_check_balace(ex, asset, maxUSD) #opt
         ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset, delay)
 
         print(f"KIMP[IN] :{kimp[IN]}% (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN] })")
         print(f"KIMP[OUT]:{kimp[OUT]}% (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
-        if status=='BN' and kimp[IN]>(IN_TH*IN_TRF_R):
+        if (STATUS_SKIP or status=='BN') and kimp[IN]>(IN_TH*IN_TRF_R):
             log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN]}) @{now}")
             #asset_before = get_asset_total(ex, asset) 
-            log(f"(temp)asset_before:{asset_before}")
+            #log(f"(temp)asset_before:{asset_before}")
             if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD, IN_TH, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'UB'
                 asset_after = get_asset_total(ex, asset)
                 print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
+                IN_TH = IN_TH + 0.1
 
-        elif status=='UB' and kimp[OUT]<OUT_TH:
+        elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH:
             log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) @{now}")
             #asset_before = get_asset_total(ex, asset)
-            log(f"(temp)asset_before:{asset_before}")
+            #log(f"(temp)asset_before:{asset_before}")
             if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'BN'
                 asset_after = get_asset_total(ex, asset)
                 print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
                 OUT_TH = OUT_TH - 0.1
-                
+
         if cnt > 5:
             print(f"cnt{cnt} exit")
             exit(0)
