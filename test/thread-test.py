@@ -1,29 +1,63 @@
-from multiprocessing import Process, Queue
+import multiprocessing
+from multiprocessing.dummy import Pool as ThreadPool
+import time
 
-def work(id, start, end, result):
-    total = 0
-    for i in range(start, end):
-        total += i
-    result.put(total)
-    return
+def get_ms():
+    return round(time.time() * 1000)
 
-if __name__ == "__main__":
-    START, END = 0, 10000
-    result = Queue()
-    th1 = Process(target=work, args=(1, START, END//2, result))
-    th2 = Process(target=work, args=(2, END//2, END, result))
-    
-    th1.start()
-    th2.start()
-    th1.join()
-    th2.join()
+def worker(param):
+    #print('worker:' + str(param))
+    return param + 1
 
-    result.put('STOP')
-    total = 0
-    while True:
-        tmp = result.get()
-        if tmp == 'STOP':
-            break
-        else:
-            total += tmp
-    print(f"Result: {total}")
+def start_process():
+    print('start process')
+
+
+def test1():
+    POOL_SIZE = 4
+
+    pool = ThreadPool(POOL_SIZE)
+
+    input = [1, 2, 3, 4]
+    t0 = get_ms()
+    result = pool.map(worker, input)
+    t1 = get_ms()
+    pool.close()
+    t2 = get_ms()
+    pool.join()
+    t3 = get_ms()
+
+    print(result)
+    print(t1-t0)
+    print(t2-t1)
+    print(t3-t2)
+
+from concurrent.futures import ThreadPoolExecutor
+
+def test2():
+    t0 = get_ms()
+    executor = ThreadPoolExecutor(max_workers=10)
+    t1 = get_ms()
+    fut1 = executor.submit(worker, 1)
+    fut2 = executor.submit(worker, 2)
+    fut3 = executor.submit(worker, 3)
+    fut4 = executor.submit(worker, 4)
+    t2 = get_ms()
+    print(fut4.result())
+    t3 = get_ms()
+    print(fut2.result())
+    t4 = get_ms()
+    print(fut3.result())
+    t5 = get_ms()
+    print(fut1.result())
+    t6 = get_ms()
+
+    print("ms")
+    print(t1-t0)
+    print(t2-t1)
+    print(t3-t2)
+    print(t4-t3)
+    print(t5-t4)
+    print(t6-t5)
+
+test2()
