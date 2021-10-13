@@ -45,13 +45,13 @@ def arbi_in_withdraw_bn_to_ub(ex: Exchanges, asset: str, t_q: float, t_q_fee: fl
 def wait_kimp_inTh(ex: Exchanges, asset: str, inTh: float):
     cnt = 0
     while True:
-        t0 = get_ms()
+        #t0 = get_ms()
         #fixme: fut이 spot보다 좀 더 높아서... 처음에 spot-fut 비율을 가져와야할것같은데..
         bn_p_usd, _  = bn_fut_1st_ask(ex, asset)  #long from futures - ask #ub_spot_1st_ask(..) some times lose
-        t1 = get_ms()
+        #t1 = get_ms()
         ub_p_krw, _  = ub_spot_1st_bid(ex, asset) #sell spot - bid
-        t2 = get_ms()
-        print(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_1st_ask({t1-t0}ms), ub_spot_1st_bid({t2-t1}ms)")
+        #t2 = get_ms()
+        #print(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_1st_ask({t1-t0}ms), ub_spot_1st_bid({t2-t1}ms)")
         ub_p_usd  = round(ub_p_krw / ex.krwPerUsd, 4)
         kimp  = round( (ub_p_usd/bn_p_usd-1)*100,2)
         print(f"[wait_kimp_inTh]({cnt}) kimp({kimp}) > inTh({inTh}) ?")
@@ -66,13 +66,13 @@ def arbi_in_ubSpotSell_bnFutBuy(ex: Exchanges, asset: str, t_q_fee: float, inTh:
     #!fixme ub - bn_fut async 
     #python binance async https://sammchardy.github.io/async-binance-basics/
     #python coroutine...
-    t0 = get_ms()
+    #t0 = get_ms()
     bn_order_f = bn_fut_trade(ex, asset, TRADE_BUY, bn_p_usd, t_q_fee, TEST)    #4b. Futures Long
-    t1 = get_ms()
+    #t1 = get_ms()
     ub_order_s = ub_spot_trade(ex, asset, TRADE_SELL, ub_p_krw, t_q_fee, TEST)  #4a. Spot Sell
-    t2 = get_ms()
+    #t2 = get_ms()
 
-    print(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_trade({t1-t0}ms), ub_spot_trade({t2-t1}ms)")
+    #print(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_trade({t1-t0}ms), ub_spot_trade({t2-t1}ms)")
     ub_wait_order(ex, ub_order_s, TEST)
     bn_wait_order(ex, bn_order_f, BN_FUT, TEST)
 

@@ -31,3 +31,7 @@ During handling of the above exception, another exception occurred:
 [bn_fut_BUY]EOSUSDT 4.0q @ 4.877$, TEST=False
 [ub_spot_sell]KRW-EOS 4.0q @ 5950.0W(4.9749$), TEST=False
 [arbi_in_ubSpotSell_bnFutBuy] bn_fut_trade(54ms), ub_spot_trade(111ms)
+
+1014
+-withdraw fee db
+-threading

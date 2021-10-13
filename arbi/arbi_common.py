@@ -25,12 +25,23 @@ def wait_bn_future_settle(ex: Exchanges, asset: str, bn_p_usd: float)->tuple[flo
 
 def check_fee_bnb(ex: Exchanges, maxUSD: float)->bool:
     bnb_q = bn_get_spot_balance(ex, 'BNB') 
+    bnb_fut_q = bn_fut_acc_asset_balance(ex, 'BNB') 
     bnb_price = float(ex.binance.get_symbol_ticker(symbol='BNBUSDT')['price'])
+    
     bnb_usdt = bnb_q * bnb_price
-    feeUSDT = maxUSD * (0.0010 + 0.0004*2 + 0.0010) #spot fee + future fee 2x + pad
+    bnb_fut_usdt = bnb_fut_q * bnb_price
+
+    feeUSDT = maxUSD * 0.0010
+    feeFutUSDT = maxUSD * 0.0004*2
+
     if bnb_usdt < feeUSDT: 
         print(f"insufficient bnbUSDT: {bnb_usdt} < {feeUSDT}")
         return False
+    
+    if bnb_fut_usdt < feeFutUSDT: 
+        print(f"insufficient bnbFutUSDT: {bnb_fut_usdt} < {feeFutUSDT}")
+        return False
+
     return True
 
 def check_bn_balance(ex: Exchanges, maxUSD: float)->bool:
@@ -48,9 +59,9 @@ def check_ub_balance(ex: Exchanges, maxUSD: float)->bool:
         return False
     return True
 
-def check_bn_fut_balance(ex: Exchanges, asset: str, maxUSD: float)->bool:
-    futBal = bn_get_fut_balance(ex, asset)
-    if futBal < maxUSD:
-        print(f"insufficient BN Fut balance {futBal} < {maxUSD}")
+def check_bn_fut_margin_balance(ex: Exchanges, asset: str, maxUSD: float)->bool:
+    futMarBal = bn_get_fut_margin_balance(ex, asset)
+    if futMarBal < maxUSD:
+        print(f"insufficient BN Fut balance {futMarBal} < {maxUSD}")
         return False
     return True

@@ -27,7 +27,7 @@ def get_asset_total(ex: Exchanges, asset: str):
    bn_usd = bn_get_spot_balance(ex, 'USDT')
    bn_pending = bn_get_pending_amt(ex, asset)
 
-   bn_fut_usd = bn_get_fut_wallet_balance(ex)
+   bn_fut_usd = bn_fut_acc_asset_balance(ex, 'USDT')
    bn_fut_pending = bn_get_fut_pending_amt(ex, asset)
 
    pending = ub_pending + bn_pending + bn_fut_pending
@@ -134,7 +134,7 @@ def main():
     
     log_open('log.txt')
     log(f"date:{datetime.now().strftime('%Y%m%d_%H%M%S')}")
-    log(f"config: asset={asset}, status={status} STATUS_CHANGE={STATUS_CHANGE} OUT_TH={OUT_TH}, IN_TH={IN_TH}")
+    log(f"config: asset={asset}, status={status} STATUS_CHANGE={STATUS_CHANGE} OUT_TH={OUT_TH}, IN_TH={IN_TH}, maxUSD={maxUSD}")
     
     if ORDER_TEST:
         print('test order')

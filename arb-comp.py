@@ -27,7 +27,7 @@ asset  = 'BTC'
 bn_pair = asset + 'USDT'
 ub_pair = "KRW-" + asset
 krwPerUsd = krw_per_usd()
-if False: #True: force new download, False: use cached csv file
+if True: #force new download, False: use cached csv file
     client = Client()
 
     yesterday = date.today() - timedelta(days)

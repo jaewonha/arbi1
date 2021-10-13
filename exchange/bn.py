@@ -23,7 +23,7 @@ FUT_LONG    = 7011
 def bn_get_spot_balance(ex: Exchanges, asset: str, doRound: bool = True):
     #print('### spot balance ###')
     balance = ex.binance.get_asset_balance(asset=asset)
-    assert ( balance['asset'] == 'EOS' or balance['asset'] == 'USDT' or balance['asset'] == 'BNB')
+    #assert ( balance['asset'] == 'EOS' or balance['asset'] == 'USDT' or balance['asset'] == 'BNB')
     if doRound:
         s_q = math.floor(float(balance['free'])*10)/10 #2자리 미만 안쓰임
     else:
@@ -40,7 +40,13 @@ def bn_wait_balance(ex: Exchanges, asset: str, t_q: float):
             break
         time.sleep(1)
 
-def bn_get_fut_margin_balance(ex: Exchanges, acc: dict = None):
+def bn_fut_acc_asset_balance(ex:Exchanges, asset:str):
+    assert asset == 'USDT' or asset == 'BNB'
+    fut_acc = ex.binance.futures_account_balance()
+    fut_acc_asset = list(filter(lambda acc: acc['asset']==asset, fut_acc))[0]
+    return float(fut_acc_asset['balance'])
+
+def bn_get_fut_margin_usdt(ex: Exchanges, acc: dict = None):
     acc = ex.binance.futures_account() if acc == None else acc
     asset = acc['assets'][3]
     assert asset['asset'] == 'USDT' #fixme
@@ -50,35 +56,26 @@ def bn_get_fut_margin_balance(ex: Exchanges, acc: dict = None):
     #float(asset['unrealizedProfit'])
     return float(asset['marginBalance'])
 
-def bn_get_fut_wallet_balance(ex: Exchanges, acc: dict = None):
-    acc = ex.binance.futures_account() if acc == None else acc
-    asset = acc['assets'][3]
-    assert asset['asset'] == 'USDT'
-
-    #float(asset['walletBalance']) = total net + funding fee - tx fee
-    return float(asset['walletBalance'])
 
 def bn_get_fut_asset_q(ex: Exchanges, asset: str):
-    assert asset == 'EOS'
-    EOS_IDX = 67 #fixme: NO IDX or ADD XRP or ETC
-    #print('### futures balance ###')
-    acc = ex.binance.futures_account()
-    f_eos = acc['positions'][EOS_IDX]
-    assert f_eos['symbol'] == 'EOSUSDT' #<-- check!
-    f_p = float(f_eos['entryPrice'])
-    f_q = float(f_eos['positionAmt'])
-    
+    f_asset = ex.binance.futures_position_information(symbol=bn_usdt_pair(asset))[0]
+    f_p = float(f_asset['entryPrice'])
+    f_q = float(f_asset['positionAmt'])
     return f_p, f_q
 
-def bn_get_fut_balance(ex: Exchanges, asset: str):
-    assert asset == 'EOS'
-    EOS_IDX = 67 #fixme: NO IDX or ADD XRP or ETC
-    #print('### futures balance ###')
+def bn_get_fut_margin_balance(ex: Exchanges, asset: str):
     acc = ex.binance.futures_account()
-    f_eos = acc['positions'][EOS_IDX]
-    assert f_eos['symbol'] == 'EOSUSDT' #<-- check!
-    leverage = float(f_eos['leverage'])
-    marginBalance = bn_get_fut_margin_balance(ex, acc)
+    pos = acc['positions']
+
+    if str == 'EOS':
+        f_asset = pos[67]
+        assert f_asset['symbol'] == 'EOSUSDT' #<-- check!
+    else:
+        bn_pair = bn_usdt_pair(asset)
+        f_asset = list(filter(lambda p: p['symbol']==bn_pair, pos))[0]
+
+    leverage = float(f_asset['leverage'])
+    marginBalance = bn_get_fut_margin_usdt(ex, acc)
 
     return marginBalance*leverage*0.8 #safe 20%
 

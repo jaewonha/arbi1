@@ -11,8 +11,12 @@ ex = Exchanges()
 
 
 asset = 'EOS'
-t_q_fee = 1333.0 #upbit spot, binance fut short q
-inTh = 4.0
+if True:
+    t_q_fee = 1111.0 #upbit spot, binance fut short q
+    inTh = 3.5
+else:
+    t_q_fee = 1333.0 #upbit spot, binance fut short q
+    inTh = 3.6
 TEST = False
 
 asset_before = get_asset_total(ex, asset)
