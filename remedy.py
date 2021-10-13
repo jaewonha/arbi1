@@ -6,13 +6,17 @@ from main import *
 
 ex = Exchanges()
 
+#f = open('.config.ini','r')
+#config = json.load(f)['remedy']
+
+
 asset = 'EOS'
-t_q_fee = 444.3 #upbit spot, binance fut short q
-inTh = 4.5
+t_q_fee = 1333.0 #upbit spot, binance fut short q
+inTh = 4.0
 TEST = False
 
 asset_before = get_asset_total(ex, asset)
 arbi_in_ubSpotSell_bnFutBuy(ex, asset, t_q_fee, inTh, TEST)
 asset_after = get_asset_total(ex, asset)
-maxUSD = 2000
+maxUSD = 8000
 print_arbi_stat(asset_before, asset_after, +inTh, maxUSD, ex.krwPerUsd)

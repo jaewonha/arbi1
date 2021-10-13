@@ -114,16 +114,21 @@ def log_asset_total(ex: Exchanges, asset: str):
 def main():
     #config
     #status = 'UB'
-    status = 'BN' 
-    STATUS_CHANGE = False #only in or only out mode
-    STATUS_SKIP = True
-    IN_TH = 4.5  #high - in
-    OUT_TH = 2.65  #low - out
-    #maxUSD = 500
-    maxUSD = 8000
-    asset = "EOS" #target asset to trade arbi
-    IN_TRF_R = 0.9
-    ORDER_TEST = False
+    f = open('.config.ini','r')
+    config = json.load(f)['main']
+
+    print(config)
+    status          = config['status']
+    STATUS_CHANGE   = config['STATUS_CHANGE'] #only in or only out mode
+    STATUS_SKIP     = config['STATUS_SKIP']
+    IN_TH           = config['IN_TH'] #4.25  #high - in
+    OUT_TH          = config['OUT_TH'] #2.6  #low - out
+    IN_TH_INC       = config['IN_TH_INC']
+    OUT_TH_DEC      = config['OUT_TH_DEC']
+    maxUSD          = config['maxUSD'] #8000
+    asset           = config['asset'] #"EOS" #target asset to trade arbi
+    IN_TRF_R        = config['IN_TRF_R'] #0.9
+    ORDER_TEST      = config['ORDER_TEST'] #False
 
     ex = Exchanges()
     
@@ -171,7 +176,7 @@ def main():
                 #asset_after = get_asset_total(ex, asset)
                 #print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
                 log_asset_total(ex, asset)
-                IN_TH = IN_TH + 0.25
+                IN_TH = IN_TH + IN_TH_INC
 
         elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH:
             log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) @{now}")
@@ -183,7 +188,7 @@ def main():
                 #asset_after = get_asset_total(ex, asset)
                 #print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
                 log_asset_total(ex, asset)
-                OUT_TH = OUT_TH - 0.1
+                OUT_TH = OUT_TH + OUT_TH_DEC
 
         if cnt > 5:
             print(f"cnt{cnt} exit")

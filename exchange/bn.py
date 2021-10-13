@@ -340,4 +340,4 @@ def bn_get_fut_pending_amt(ex: Exchanges, asset: str)->float:
     return gain
 
 def bn_is_backward(bnSpot1st, bnFut1st)->bool: #type hint float array
-    return bnFut1st[BID][0] < bnSpot1st[ASK][0]
+    return bnFut1st[BID][0] + 0.002 < bnSpot1st[ASK][0] #2tick

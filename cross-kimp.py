@@ -34,9 +34,9 @@ for ub_ticker in ub_tickers:
         ub_asset.append(ub_ticker[4:])
 
 assets = np.intersect1d(bn_fut_asset, ub_asset)
-assets = ['EOS']
+#assets = ['EOS']
 print(assets)
-skip_asset = ['HBAR'] #how to check disabled coins?
+skip_asset = ['HBAR', 'BTC', 'BCH'] #how to check disabled coins?
 while True:
     now = datetime.now()
     if now.minute != lastMin:

@@ -133,7 +133,9 @@ def ub_safe_order(ex: Exchanges, order: dict, key: str)->str:
             return _order[key]
         except Exception as e:
                 # key error 주문을 찾을 수 없습니다 -> 좀 있으면 들어옴
-                print("error", order)
+                print("error:", order)
+                if order['error']['name'] == 'insufficient_funds_bid':
+                    raise Exception('KRW 잔액 부족')
         time.sleep(1)
 
 def ub_wait_order(ex: Exchanges, order: dict, TEST: bool)->None:
