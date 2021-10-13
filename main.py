@@ -22,7 +22,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 def get_asset_total(ex: Exchanges, asset: str):
    ub_usd = ub_get_spot_balance(ex, 'KRW') / ex.krwPerUsd
-   ub_pending = bn_get_pending_amt(ex, asset)
+   ub_pending = ub_get_pending_amt(ex, asset) / ex.krwPerUsd
 
    bn_usd = bn_get_spot_balance(ex, 'USDT')
    bn_pending = bn_get_pending_amt(ex, asset)

@@ -156,6 +156,10 @@ def ub_wait_order(ex: Exchanges, order: dict, TEST: bool)->None:
 
 def ub_get_pending_amt(ex: Exchanges, asset: str)->float:
     #todo:
+    q = ub_get_spot_balance(ex, asset)
+    ub_pair = ub_krw_pair(asset)
+    p = pyupbit.get_current_price([ub_pair])
+    return q*p[ub_pair]
     #query pending order by asset
     #amount t_q *t_p
     #ret
