@@ -12,7 +12,7 @@ ex = Exchanges()
 
 asset = 'EOS'
 if True:
-    t_q_fee = 1111.0 #upbit spot, binance fut short q
+    t_q_fee = 2197.7 #upbit spot, binance fut short q
     inTh = 3.5
 else:
     t_q_fee = 1333.0 #upbit spot, binance fut short q

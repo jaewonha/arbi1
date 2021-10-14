@@ -170,7 +170,7 @@ def main():
             log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN]}) @{now}")
             #asset_before = get_asset_total(ex, asset) 
             #log(f"(temp)asset_before:{asset_before}")
-            if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD/2, IN_TH, ORDER_TEST, True):
+            if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD, IN_TH, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'UB'
                 #asset_after = get_asset_total(ex, asset)
@@ -179,6 +179,7 @@ def main():
                 IN_TH = IN_TH + IN_TH_INC
 
         elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH:
+            maxUSD = 650
             log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) @{now}")
             #asset_before = get_asset_total(ex, asset)
             #log(f"(temp)asset_before:{asset_before}")

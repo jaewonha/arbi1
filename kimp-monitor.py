@@ -18,7 +18,8 @@ ex = Exchanges()
 
 lastMin = None
 delay = 1
-asset ='EOS'
+asset ='TRX'
+# check asset is listed on futres market
 
 while True:
     now = datetime.now()

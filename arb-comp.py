@@ -22,12 +22,12 @@ from conv.krw2usd import krw_per_usd
 from classes.ArbiRange import ArbiRange
 from util.time import *
     
-days = 7
+days = 14
 asset  = 'BTC'
 bn_pair = asset + 'USDT'
 ub_pair = "KRW-" + asset
 krwPerUsd = krw_per_usd()
-if True: #force new download, False: use cached csv file
+if False: #force new download, False: use cached csv file
     client = Client()
 
     yesterday = date.today() - timedelta(days)
@@ -36,6 +36,7 @@ if True: #force new download, False: use cached csv file
     klines = []
     #KLINE_INTERVAL_1DAY, KLINE_INTERVAL_1HOUR, KLINE_INTERVAL_1MINUTE
     klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1MINUTE, str(from_ts))
+    #klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1HOUR, str(from_ts))
     klines2 = np.delete(klines, range(5,12), axis=1)
 
     
