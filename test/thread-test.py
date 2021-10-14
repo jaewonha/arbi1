@@ -60,4 +60,14 @@ def test2():
     print(t5-t4)
     print(t6-t5)
 
-test2()
+def test3():
+    def say_something (var1, var2, var3):
+        print('{}: {} = {}'.format(var1, var2, var3))
+        return var3
+
+    pool = ThreadPoolExecutor(2)
+    ret1 = pool.submit(lambda p: say_something(*p), ['name', 'Joldnine', 'aa'])
+    ret2 = pool.submit(lambda p: say_something(*p), ['email', 'heyhey@hey.com', 'bb'])
+    print(ret1.result())
+    print(ret2.result())
+test3()

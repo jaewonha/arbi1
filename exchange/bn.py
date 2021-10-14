@@ -179,7 +179,7 @@ def bn_fut_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: flo
             price=t_p,
             quantity=t_q)
 
-async def bn_fut_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: float, TEST: bool = True):
+async def a_bn_fut_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: float, TEST: bool = True):
     tradeType = bn_get_trade_type(tradeMode)
     pair = bn_usdt_pair(asset)
     log(f"[a_bn_fut_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
