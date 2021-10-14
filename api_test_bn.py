@@ -9,6 +9,9 @@ bn = ex.binance
 
 print('test')
 
+arbi_in_ubSpotSell_bnFutBuy(ex, 'EOS', 10, 0, False)
+
+exit(0)
 #bn_fut_acc_asset_balance(ex, 'BNB')
 #bn_fut_acc_asset_balance(ex, 'USDT')
 #f = open('.config.ini','r')
