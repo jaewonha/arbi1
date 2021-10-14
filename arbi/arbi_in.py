@@ -76,3 +76,21 @@ def arbi_in_ubSpotSell_bnFutBuy(ex: Exchanges, asset: str, t_q_fee: float, inTh:
     ub_wait_order(ex, ub_order_s, TEST)
     bn_wait_order(ex, bn_order_f, BN_FUT, TEST)
 
+async def a_arbi_in_ubSpotSell_bnFutBuy(ex: Exchanges, asset: str, t_q_fee: float, inTh: float, TEST: bool):
+    ub_p_krw, bn_p_usd = wait_kimp_inTh(ex, asset, inTh) #ensure target kimp is maintained
+    #balance availability check!
+    #!fixme ub - bn_fut async 
+    #python binance async https://sammchardy.github.io/async-binance-basics/
+    #python coroutine...
+    t0 = get_ms()
+    bn_order_f, ub_order_s = await asyncio.gather(
+        a_ub_spot_trade(ex, asset, TRADE_SELL, ub_p_krw, t_q_fee, TEST),  #4a. Spot Sell
+        a_bn_fut_trade(ex, asset, TRADE_BUY, bn_p_usd, t_q_fee, TEST) #4b. Futures Long
+    )
+    t1 = get_ms()
+    ub_wait_order(ex, ub_order_s, TEST)
+    bn_wait_order(ex, bn_order_f, BN_FUT, TEST)
+    t2 = get_ms()
+
+    print(f"[a_arbi_in_ubSpotSell_bnFutBuy] trade call({t1-t0}ms), wait_order({t2-t1}ms)")
+    

@@ -179,6 +179,27 @@ def bn_fut_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: flo
             price=t_p,
             quantity=t_q)
 
+async def bn_fut_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: float, TEST: bool = True):
+    tradeType = bn_get_trade_type(tradeMode)
+    pair = bn_usdt_pair(asset)
+    log(f"[a_bn_fut_{tradeType}]{pair} {t_q}q @ {t_p}$, TEST={TEST}")
+    if TEST:
+        return ex.a_binance.create_test_order(
+            symbol=pair,
+            side=tradeType,
+            type=Client.ORDER_TYPE_LIMIT,
+            timeInForce='GTC',
+            price=t_p,
+            quantity=t_q)
+    else:
+        return ex.a_binance.futures_create_order(
+            symbol=pair,
+            side=tradeType,
+            type=Client.ORDER_TYPE_LIMIT,
+            timeInForce='GTC',
+            price=t_p,
+            quantity=t_q)
+
 def bn_wait_order(ex: Exchanges, order: dict, type: int, TEST: bool):
     if TEST: return
 
