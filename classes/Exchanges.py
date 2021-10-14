@@ -1,8 +1,10 @@
 import pyupbit
 from upbit.client import Upbit
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
+from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
 from classes import *
 from conv.krw2usd import krw_per_usd
+import asyncio
 import json
 
 class Exchanges:
@@ -20,9 +22,15 @@ class Exchanges:
         api_key = keyJson['binance']['apiKey']
         sec_key = keyJson['binance']['secKey']
         self.binance = Client(api_key, sec_key)
+        
+        self.api_key = api_key
+        self.sec_key = sec_key
 
         self.updateCurrency()
         f.close()
+        
+    async def prepare_async(self):
+        self.a_binance = await AsyncClient(self.api_key, self.sec_key).create()
 
     def updateCurrency(self):
         self.krwPerUsd: float= float(krw_per_usd())
