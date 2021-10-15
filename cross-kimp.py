@@ -45,8 +45,14 @@ assets_10min = ['ADA', 'ANKR', 'ATOM', 'AXS', 'BAT', 'BTT', 'CHZ', 'CVC', 'DOGED
 
 assets_30minplus = ['AE', 'BCN', 'QTUM', 'DCR', 'XTZ', 'XMR', 'LTC', 'MXR',
         'LTC', 'LSK', 'ZEC', 'BCD', 'BTG', 'BCHA', 'BSV', 'BTC', 'RVN', 'BCH',
-        'ETC', 'ETH']
-#assets = np.intersect1d(assets, assets_1min)
+        'ETC', 'ETH',
+        #temp
+        'MATIC',    #bn suspended
+        'DOT',       #ub suspended
+        'NEO', #ub address invalid
+        
+]
+#assets = np.intersect1d(assets, assets_10min)
 
 num_assets = len(assets)
 print(f"num_assets:{num_assets}")
@@ -72,7 +78,7 @@ class ThreadCalcKimpParam:
 '''
 def thread_calc_kimp(asset):
     if asset in skip_asset: return [0,99]
-    ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset, CHECK_BACKWARD = False)
+    ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset, CHECK_BACKWARD=False)
     return kimp
 
 while True:
@@ -95,7 +101,7 @@ while True:
         futRet = futRetArr[i]
         asset = assets[i]
         kimp = futRet.result()
-        if asset=='EOS': print(f"{asset}: IN={kimp[IN]}, OUT={kimp[OUT]}")
+        if asset=='ANKR': print(f"{asset}: IN={kimp[IN]}, OUT={kimp[OUT]}")
         if kimp[IN]  > max_in  : max_in  = kimp[IN] ; max_in_asset  = asset
         if kimp[OUT] < min_out : min_out = kimp[OUT]; min_out_asset = asset
         '''

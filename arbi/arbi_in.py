@@ -59,9 +59,10 @@ def wait_kimp_inTh(ex: Exchanges, asset: str, inTh: float):
         #t2 = get_ms()
         #print(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_1st_ask({t1-t0}ms), ub_spot_1st_bid({t2-t1}ms)")
         ub_p_usd  = round(ub_p_krw / ex.krwPerUsd, 4)
-        kimp  = round( (ub_p_usd/bn_p_usd-1)*100,2)
-        print(f"[wait_kimp_inTh]({cnt}) kimp({kimp}) > inTh({inTh}) ?")
+        kimp  = round( (ub_p_usd/bn_p_usd-1)*100,2)    
+        if cnt%10==0: print(f"[wait_kimp_inTh]({cnt}) kimp({kimp}) > inTh({inTh}) ?")
         if kimp > inTh:
+            print(f"[wait_kimp_inTh] proceed: ({cnt}) kimp({kimp}) > inTh({inTh}) ?")
             return ub_p_krw, bn_p_usd
         cnt = cnt + 1
         time.sleep(1)

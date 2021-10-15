@@ -23,7 +23,7 @@ from classes.ArbiRange import ArbiRange
 from util.time import *
     
 days = 14
-asset  = 'BTC'
+asset  = 'EOS'
 bn_pair = asset + 'USDT'
 ub_pair = "KRW-" + asset
 krwPerUsd = krw_per_usd()

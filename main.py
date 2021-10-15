@@ -91,7 +91,7 @@ def calc_kimp(ex: Exchanges, asset: str, maxUSD: float = 1000000000, CHECK_BACKW
     ub_p_usd[IN]  = round(ub_p_krw[IN]  / ex.krwPerUsd, 6)
     #bn_p_krw[IN]  = round(bn_p_usd[IN]  * ex.krwPerUsd, 6)
     ub_p_usd[OUT] = round(ub_p_krw[OUT] / ex.krwPerUsd, 6)
-    #bn_p_krw[OUT] = arb-compround(bn_p_usd[OUT] * ex.krwPerUsd, 6)
+    #bn_p_krw[OUT] = round(bn_p_usd[OUT] * ex.krwPerUsd, 6)
 
     #print
     #print(f"[UB]KRW={ub_p_krw}, USD={ub_p_usd}")
@@ -99,7 +99,7 @@ def calc_kimp(ex: Exchanges, asset: str, maxUSD: float = 1000000000, CHECK_BACKW
     kimp[IN]  = round( (ub_p_usd[IN]/bn_p_usd[IN]-1)*100, 2)
     kimp[OUT] = round( (ub_p_usd[OUT]/bn_p_usd[OUT]-1)*100, 2)
 
-    return ub_p_krw, ub_p_usd, bn_f_usd, kimp 
+    return ub_p_krw, bn_p_usd, bn_f_usd, kimp 
 
 def toUsd(ex: Exchanges, krw: float):
     return round(krw/ex.krwPerUsd,6)
@@ -179,7 +179,7 @@ def main():
                 IN_TH = IN_TH + IN_TH_INC
 
         elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH:
-            maxUSD = 650
+            #maxUSD = 650
             log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) @{now}")
             #asset_before = get_asset_total(ex, asset)
             #log(f"(temp)asset_before:{asset_before}")
@@ -190,6 +190,7 @@ def main():
                 #print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
                 log_asset_total(ex, asset)
                 OUT_TH = OUT_TH + OUT_TH_DEC
+                exit(1)
 
         if cnt > 5:
             print(f"cnt{cnt} exit")

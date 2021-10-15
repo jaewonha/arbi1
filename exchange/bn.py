@@ -325,11 +325,13 @@ def bn_cancel_or_refund(ex: Exchanges, order: dict, mode: int, pair: str, TEST: 
 def bn_get_precision(asset):
     if asset == 'EOS': return 4
     elif asset == 'TRX': return 5
+    elif asset == 'XRP': return 4
     else: raise Exception(f'bn_get_precision] unknown asset: {asset}')
 
 def bn_get_withdraw_fee(asset):
     if asset == 'EOS': return 0.1
     elif asset == 'TRX': return 1
+    elif asset == 'XRP': return 0.25
     else: raise Exception(f'bn_get_withdraw_fee] unknown asset: {asset}')
 
 def bn_get_pending_amt(ex: Exchanges, asset: str)->float:
