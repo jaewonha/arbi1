@@ -125,9 +125,9 @@ def main():
     OUT_TH          = config['OUT_TH'] #2.6  #low - out
     IN_TH_INC       = config['IN_TH_INC']
     OUT_TH_DEC      = config['OUT_TH_DEC']
-    maxUSD          = config['maxUSD'] 
-    maxUSDInF       = config['maxUSDInF'] 
-    maxUSDOutF      = config['maxUSDOutF'] 
+    maxUSD          = config['maxUSD']
+    maxUSDInF       = config['maxUSDInF']
+    maxUSDOutF      = config['maxUSDOutF']
     asset           = config['asset'] #"EOS" #target asset to trade arbi
     IN_TRF_R        = config['IN_TRF_R'] #0.9
     ORDER_TEST      = config['ORDER_TEST'] #False

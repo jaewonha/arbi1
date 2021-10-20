@@ -18,13 +18,13 @@ def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn
     f_t_p = bn_f_usd #assume fut price is used calc kimp
 
     #thread order
-    pool = ThreadPoolExecutor(2)
-    #ub_order = ub_spot_trade(ex, asset, TRADE_BUY, ub_p_krw, t_q, TEST);
-    #bn_order = bn_fut_trade(ex, asset, TRADE_SELL, f_t_p, t_q, TEST)
-    ret1 = pool.submit(lambda p: ub_spot_trade(*p), [ex, asset, TRADE_BUY, ub_p_krw, t_q, TEST])
-    ret2 = pool.submit(lambda p: bn_fut_trade(*p),  [ex, asset, TRADE_SELL, f_t_p, t_q, TEST])
-    ub_order = ret1.result()
-    bn_order = ret2.result()    
+    #pool = ThreadPoolExecutor(2)
+    ub_order = ub_spot_trade(ex, asset, TRADE_BUY, ub_p_krw, t_q, TEST);
+    bn_order = bn_fut_trade(ex, asset, TRADE_SELL, f_t_p, t_q, TEST)
+    #ret1 = pool.submit(lambda p: ub_spot_trade(*p), [ex, asset, TRADE_BUY, ub_p_krw, t_q, TEST])
+    #ret2 = pool.submit(lambda p: bn_fut_trade(*p),  [ex, asset, TRADE_SELL, f_t_p, t_q, TEST])
+    #ub_order = ret1.result()
+    #bn_order = ret2.result()    
     ub_wait_order(ex, ub_order, TEST)
     bn_wait_order(ex, bn_order, BN_FUT, TEST)
 
