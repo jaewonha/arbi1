@@ -101,7 +101,7 @@ while True:
         futRet = futRetArr[i]
         asset = assets[i]
         kimp = futRet.result()
-        if asset=='ANKR': print(f"{asset}: IN={kimp[IN]}, OUT={kimp[OUT]}")
+        if asset=='EOS': print(f"{asset}: IN={kimp[IN]}, OUT={kimp[OUT]}")
         if kimp[IN]  > max_in  : max_in  = kimp[IN] ; max_in_asset  = asset
         if kimp[OUT] < min_out : min_out = kimp[OUT]; min_out_asset = asset
         '''

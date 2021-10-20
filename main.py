@@ -147,7 +147,7 @@ def main():
             exit(0)
 
     cnt = 0
-    delay = 2
+    delay = 1
     lastMin = None
     
     log_asset_total(ex, asset)
@@ -190,7 +190,6 @@ def main():
                 #print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
                 log_asset_total(ex, asset)
                 OUT_TH = OUT_TH + OUT_TH_DEC
-                exit(1)
 
         if cnt > 5:
             print(f"cnt{cnt} exit")

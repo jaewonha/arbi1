@@ -27,7 +27,8 @@ asset  = 'EOS'
 bn_pair = asset + 'USDT'
 ub_pair = "KRW-" + asset
 krwPerUsd = krw_per_usd()
-if False: #force new download, False: use cached csv file
+if True: #force new download, False: use cached csv file
+    print('download new data')
     client = Client()
 
     yesterday = date.today() - timedelta(days)
@@ -70,6 +71,8 @@ if False: #force new download, False: use cached csv file
     print(df_join.head())
 
     df_join.to_csv('df_join-'+str(days)+'d.csv')
+else:
+    print('use cached data')
 
 df_join = pd.read_csv('df_join-'+str(days)+'d.csv', index_col=0, parse_dates=True) 
 df_join['ts'] = pd.to_datetime(df_join['ts'])
