@@ -125,7 +125,9 @@ def main():
     OUT_TH          = config['OUT_TH'] #2.6  #low - out
     IN_TH_INC       = config['IN_TH_INC']
     OUT_TH_DEC      = config['OUT_TH_DEC']
-    maxUSD          = config['maxUSD'] #8000
+    maxUSD          = config['maxUSD'] 
+    maxUSDInF       = config['maxUSDInF'] 
+    maxUSDOutF      = config['maxUSDOutF'] 
     asset           = config['asset'] #"EOS" #target asset to trade arbi
     IN_TRF_R        = config['IN_TRF_R'] #0.9
     ORDER_TEST      = config['ORDER_TEST'] #False
@@ -167,27 +169,27 @@ def main():
         print(f"KIMP[OUT]:{kimp[OUT]}% (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
         if (STATUS_SKIP or status=='BN') and kimp[IN]>(IN_TH*IN_TRF_R):
-            log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN]}) @{now}")
+            log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN]}) maxUSD={maxUSD*maxUSDInF} @ {now}")
             #asset_before = get_asset_total(ex, asset) 
             #log(f"(temp)asset_before:{asset_before}")
-            if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD, IN_TH, ORDER_TEST, True):
+            if arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD*maxUSDInF, IN_TH, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'UB'
                 #asset_after = get_asset_total(ex, asset)
-                #print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
+                #print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD*maxUSDInF, ex.krwPerUsd)
                 log_asset_total(ex, asset)
                 IN_TH = IN_TH + IN_TH_INC
 
         elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH:
             #maxUSD = 650
-            log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) @{now}")
+            log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) maxUSD={maxUSD*maxUSDOutF} @{now}")
             #asset_before = get_asset_total(ex, asset)
             #log(f"(temp)asset_before:{asset_before}")
-            if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD, ORDER_TEST, True):
+            if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD*maxUSDOutF, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'BN'
                 #asset_after = get_asset_total(ex, asset)
-                #print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD, ex.krwPerUsd)
+                #print_arbi_stat(asset_before, asset_after, -OUT_TH, maxUSD*maxUSDOutF, ex.krwPerUsd)
                 log_asset_total(ex, asset)
                 OUT_TH = OUT_TH + OUT_TH_DEC
 
