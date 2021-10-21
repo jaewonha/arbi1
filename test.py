@@ -15,15 +15,15 @@ if True: #exchange test
     arbi_check_balace(ex, asset, maxUSD) #opt
     ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset)
 
-    print("test in")
-    asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
-    arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD, IN_TH, TEST, True)
-    asset_after = get_asset_total(ex, asset)
-    print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
-
     print("test out")
     asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
     arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD, TEST)
+    asset_after = get_asset_total(ex, asset)
+    print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
+
+    print("test in")
+    asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
+    arbi_in_bn_to_ub(ex, asset, bn_p_usd[IN], bn_f_usd[IN], maxUSD, IN_TH, TEST, True)
     asset_after = get_asset_total(ex, asset)
     print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
 else: #buy sell test without withdraw

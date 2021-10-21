@@ -19,13 +19,14 @@ def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn
 
     #thread order
     #pool = ThreadPoolExecutor(2)
-    ub_order = ub_spot_trade(ex, asset, TRADE_BUY, ub_p_krw, t_q, TEST);
+    ub_order = ub_spot_trade(ex, asset, TRADE_BUY, ub_p_krw, t_q, TEST)
+    ub_wait_order(ex, ub_order, TEST) #single thread -sequential
     bn_order = bn_fut_trade(ex, asset, TRADE_SELL, f_t_p, t_q, TEST)
     #ret1 = pool.submit(lambda p: ub_spot_trade(*p), [ex, asset, TRADE_BUY, ub_p_krw, t_q, TEST])
     #ret2 = pool.submit(lambda p: bn_fut_trade(*p),  [ex, asset, TRADE_SELL, f_t_p, t_q, TEST])
     #ub_order = ret1.result()
     #bn_order = ret2.result()    
-    ub_wait_order(ex, ub_order, TEST)
+    #ub_wait_order(ex, ub_order, TEST) #multi thread
     bn_wait_order(ex, bn_order, BN_FUT, TEST)
 
     #except Exception as e:
@@ -65,26 +66,33 @@ def wait_kimp_outTh(binance, asset, krwPerUsd, outTh):
 def arbi_out_bnSpotSell_bnFutBuy(ex: Exchanges, asset: str, t_q: float, TEST):
     #no need -> kimp is fixed when BU spot + Bn shot bought
     #ub_p_krw, bn_p_usd = wait_kimp_outTh(binance, bn_pair, ub_pair, krwPerUsd, outTh) #ensure target kimp is maintained
+    pool = ThreadPoolExecutor(2)
 
     #4a. Spot Sell
-    bnSpot1st = bn_spot_1st(ex, asset)
-    #t_p, av_q = bn_spot_1st_bid(ex, asset) #market
-    t_p = bnSpot1st[BID][0]
-    
-    #4b. Futures Long
-    #f_t_p, f_av_q = bn_fut_1st_ask(ex, asset)
-    bnFut1st = bn_fut_1st(ex, asset)
-    f_t_p = bnFut1st[ASK][0]
+    while True:
+        bnSpot1st = bn_spot_1st(ex, asset)
+        #t_p, av_q = bn_spot_1st_bid(ex, asset) #market
+        t_p = bnSpot1st[BID][0]
+        
+        #4b. Futures Long
+        #f_t_p, f_av_q = bn_fut_1st_ask(ex, asset)
+        bnFut1st = bn_fut_1st(ex, asset)
+        f_t_p = bnFut1st[ASK][0]
 
+        if bn_is_backward(bnSpot1st, bnFut1st):
+            print(f"[arbi_out_bnSpotSell_bnFutBuy]backward ({t_p}) < ({f_t_p}) fail")
+            time.sleep(1)
+        else:
+            break
+        
     #thread order
-    pool = ThreadPoolExecutor(2)
     ret1 = pool.submit(lambda p: bn_spot_trade(*p), [ex, asset, TRADE_SELL, t_p, t_q, TEST])
     ret2 = pool.submit(lambda p: bn_fut_trade(*p),  [ex, asset, TRADE_BUY, f_t_p, t_q, TEST])
     bn_order_s = ret1.result()
     bn_order_f = ret2.result()
     
-    if bn_is_backward(bnSpot1st, bnFut1st):
-        print(f"[arbi_out_bnSpotSell_bnFutBuy]Traded at BackWard!: futBid={bnFut1st[1][0]} > spotAsk={bnSpot1st[0][0]} failed")
+    #if bn_is_backward(bnSpot1st, bnFut1st):
+        #print(f"[arbi_out_bnSpotSell_bnFutBuy]Traded at BackWard!: futBid={bnFut1st[1][0]} > spotAsk={bnSpot1st[0][0]} failed")
                 
     bn_wait_order(ex, bn_order_s, BN_SPOT, TEST)
     bn_wait_order(ex, bn_order_f, BN_FUT, TEST)

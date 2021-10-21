@@ -10,11 +10,12 @@ from concurrent.futures import ThreadPoolExecutor
 
 def arbi_in_bnSpotBuy_bnFutShort(ex: Exchanges, asset: str, bn_p_usd: float, bn_f_usd: float, maxUSD: float, TEST: bool) -> tuple[float, float]:
     #cale numbers
-    bn_p_usd = floor_1(bn_p_usd)
-    bn_f_usd = floor_1(bn_f_usd)
-    t_q = floor_1(maxUSD/bn_p_usd) #spot 4, future 1 #<-
+    prec_p, prec_q = bn_get_precision_pq(asset)
+    bn_p_usd = floor(bn_p_usd, prec_p) #eos price q 4. #!fixme: according to coin
+    bn_f_usd = floor(bn_f_usd, prec_p)
+    t_q = floor(maxUSD/bn_p_usd, prec_q) #spot 4, future 1 #<-
     fee = bn_get_withdraw_fee(asset)
-    t_q_fee = round(t_q-fee, 1)
+    t_q_fee = floor(t_q-fee, prec_q) 
 
     #BN Spot Buy
     #BN Futures Short

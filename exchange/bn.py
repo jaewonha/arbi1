@@ -48,13 +48,14 @@ def bn_fut_acc_asset_balance(ex:Exchanges, asset:str):
 
 def bn_get_fut_margin_usdt(ex: Exchanges, acc: dict = None):
     acc = ex.binance.futures_account() if acc == None else acc
-    asset = acc['assets'][3]
-    assert asset['asset'] == 'USDT' #fixme
+    assets = acc['assets']
+    asset_usdt = list(filter(lambda asset: asset['asset']=='USDT', assets))[0]
+    assert asset_usdt['asset'] == 'USDT' #fixme
 
     #float(asset['walletBalance']) = total net + funding fee - tx fee
     #float(asset['marginBalance']) = unrealizedProfit applied
     #float(asset['unrealizedProfit'])
-    return float(asset['marginBalance'])
+    return float(asset_usdt['marginBalance'])
 
 
 def bn_get_fut_asset_q(ex: Exchanges, asset: str):
@@ -261,11 +262,12 @@ def bn_wait_withdraw(ex: Exchanges, withdraw_id: str):
         try:
             withdraw_result = ex.binance.get_withdraw_history_id(withdraw_id)
             #pprint.pprint(withdraw_result)
-            print(f"({cnt})bn_wait_withdraw: state={withdraw_result['status']}")
+            if cnt==10 or cnt%60==0:
+                print(f"({cnt})bn_wait_withdraw: state={withdraw_result['status']}")
             if 'txId' in withdraw_result:
                 if txid is None:
                     txid = withdraw_result['txId']
-                    print(f"txid:{txid}")
+                    print(f"({cnt}) txid:{txid}")
             else:
                 _id = withdraw_result['id']
                 #print(f"id{_id}")
@@ -282,7 +284,7 @@ def bn_wait_withdraw(ex: Exchanges, withdraw_id: str):
                 #print(f"processing..")
                 pass
             elif withdraw_result['status'] == 6:
-                print('complete..')
+                print(f'({cnt}) complete..')
                 return txid
         except ConnectionError as ce:
             print('consume connection error')
@@ -367,3 +369,7 @@ def bn_get_fut_pending_amt(ex: Exchanges, asset: str)->float:
 
 def bn_is_backward(bnSpot1st, bnFut1st)->bool: #type hint float array
     return bnFut1st[BID][0] + 0.002 < bnSpot1st[ASK][0] #2tick
+
+def bn_get_precision_pq(asset: str):
+    if asset == 'EOS': return 3, 1 #p, q
+    else: raise Exception(f'[bn_get_precision_p] not supported asset={asset}')

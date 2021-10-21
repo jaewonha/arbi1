@@ -103,11 +103,14 @@ def ub_wait_withdraw(ex: Exchanges, uuid: str):
         state = result['state']
         txid = result['txid']
         #print(txid)
-        print(f"({cnt})ub_wait_withdraw: state={state}")
+        if cnt==10 or cnt%60==0:
+            print(f"({cnt}) ub_wait_withdraw: state={state}")
+
         if state == 'DONE':
+            print(f"({cnt}) ub_wait_withdraw: done")
             return txid
         time.sleep(3)
-        cnt = cnt + 3
+        cnt = cnt+3
 
 def ub_wait_deposit(ex: Exchanges, txid: str):
     cnt = 0
