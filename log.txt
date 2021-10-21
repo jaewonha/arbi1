@@ -2544,3 +2544,5 @@ config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.5, IN_TH=4.5, maxUSD=3
 date:20211021_130259
 config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.5, IN_TH=4.5, maxUSD=3750
 [20211021_130302]balance:[3875.6, 31795.2, 5745.2, 75.36]=>41491.36
+date:20211021_225048
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=3.0, IN_TH=3.5, maxUSD=100
