@@ -1,0 +1,14 @@
+#const
+ASK = 0
+BID = 1
+P = 0
+Q = 1
+
+BN_SPOT     = 5010
+BN_FUT      = 5011
+
+TRADE_BUY   = 6010
+TRADE_SELL  = 6011
+
+FUT_SHORT   = 7010
+FUT_LONG    = 7011

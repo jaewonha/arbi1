@@ -22,12 +22,12 @@ from conv.krw2usd import krw_per_usd
 from classes.ArbiRange import ArbiRange
 from util.time import *
     
-days = 14*2
+days = 14
 asset  = 'EOS'
 bn_pair = asset + 'USDT'
 ub_pair = "KRW-" + asset
 krwPerUsd = krw_per_usd()
-if True: #force new download, False: use cached csv file
+if False: #force new download, False: use cached csv file
     print('download new data')
     client = Client()
 
