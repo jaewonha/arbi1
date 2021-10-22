@@ -5,13 +5,8 @@ import itertools
 from classes.Exchanges import Exchanges
 from util.log import log
 from classes import *
+from exchange.const import *
 
-#const
-TRADE_BUY = 6010
-TRADE_SELL = 6011
-
-FUT_SHORT = 7010
-FUT_LONG  = 7011
 
 #func
 def ub_get_spot_balance(ex: Exchanges, asset: str):
@@ -28,31 +23,20 @@ def ub_wait_balance(ex: Exchanges, asset: str, t_q: float):
 def ub_krw_pair(asset: str):
     return 'KRW-' + asset
 
-def ub_spot_1st(ex: Exchanges, asset: str): #highest buying bids
+def ub_spot_orderbook(ex: Exchanges, asset: str):
     orderMeta = pyupbit.get_orderbook(tickers=ub_krw_pair(asset))[0]
-    orderBook = orderMeta['orderbook_units']
-    od_1st = orderBook[0]
-    a_t_p = od_1st['ask_price']
-    a_av_q = od_1st['ask_size']
-    b_t_p = od_1st['bid_price']
-    b_av_q = od_1st['bid_size']
+    return orderMeta['orderbook_units']
+
+def ub_spot_depth(ex: Exchanges, asset: str, depth: int, ob: dict = None): #highest buying bids
+    if ob is None:
+        ob = ub_spot_orderbook(ex, asset)
+    ob_depth = ob[depth]
+
+    a_t_p  = ob_depth['ask_price']
+    a_av_q = ob_depth['ask_size']
+    b_t_p  = ob_depth['bid_price']
+    b_av_q = ob_depth['bid_size']
     return [[a_t_p, a_av_q],[b_t_p, b_av_q]]
-
-def ub_spot_1st_bid(ex: Exchanges, asset: str): #highest buying bids
-    orderMeta = pyupbit.get_orderbook(tickers=ub_krw_pair(asset))[0]
-    orderBook = orderMeta['orderbook_units']
-    od_1st = orderBook[0]
-    t_p = od_1st['bid_price']
-    av_q = od_1st['bid_size']
-    return t_p, av_q
-
-def ub_spot_1st_ask(ex: Exchanges, asset: str): #lowest selling price
-    orderMeta = pyupbit.get_orderbook(tickers=ub_krw_pair(asset))[0]
-    orderBook = orderMeta['orderbook_units']
-    od_1st = orderBook[0]
-    t_p = od_1st['ask_price']
-    av_q = od_1st['ask_size']
-    return t_p, av_q
 
 def ub_get_trade_type(tradeMode: int):
     if tradeMode == TRADE_BUY:

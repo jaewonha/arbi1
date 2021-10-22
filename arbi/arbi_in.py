@@ -9,7 +9,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 from concurrent.futures import ThreadPoolExecutor
 
 def arbi_in_bnSpotBuy_bnFutShort(ex: Exchanges, asset: str, bn_p_usd: float, bn_f_usd: float, maxUSD: float, TEST: bool) -> tuple[float, float]:
-    #cale numbers
+    #calc numbers
     prec_p, prec_q = bn_get_precision_pq(asset)
     bn_p_usd = floor(bn_p_usd, prec_p) #eos price q 4. #!fixme: according to coin
     bn_f_usd = floor(bn_f_usd, prec_p)
@@ -54,11 +54,11 @@ def wait_kimp_inTh(ex: Exchanges, asset: str, inTh: float):
     while True:
         #t0 = get_ms()
         #fixme: fut이 spot보다 좀 더 높아서... 처음에 spot-fut 비율을 가져와야할것같은데..
-        bn_p_usd, _  = bn_fut_1st_ask(ex, asset)  #long from futures - ask #ub_spot_1st_ask(..) some times lose
+        bn_p_usd, _  = bn_fut_depth(ex, asset, 0)[ASK]  #long from futures - ask #ub_spot_1st(..)[ASK] some times lose
         #t1 = get_ms()
-        ub_p_krw, _  = ub_spot_1st_bid(ex, asset) #sell spot - bid
+        ub_p_krw, _  = ub_spot_depth(ex, asset, 0)[BID] #sell spot - bid
         #t2 = get_ms()
-        #print(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_1st_ask({t1-t0}ms), ub_spot_1st_bid({t2-t1}ms)")
+        #print(f"[arbi_in_ubSpotSell_bnFutBuy] bn_fut_depth0ASK({t1-t0}ms), ub_spot_1st_bid({t2-t1}ms)")
         ub_p_usd  = round(ub_p_krw / ex.krwPerUsd, 4)
         kimp  = round( (ub_p_usd/bn_p_usd-1)*100,2)    
         if cnt%10==0: print(f"[wait_kimp_inTh]({cnt}) kimp({kimp}) > inTh({inTh}) ?")

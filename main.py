@@ -55,7 +55,7 @@ def print_arbi_stat(before, after, th, maxUSD, krwPerUsd):
     log_flush()
 
 
-def calc_kimp(ex: Exchanges, asset: str, maxUSD: float = 1000000000, CHECK_BACKWARD = True):
+def calc_kimp(ex: Exchanges, asset: str, CHECK_BACKWARD = True, maxUSD: float = -1 ):
     ub_p_krw = [0.0,0.0]
     ub_p_usd = [0.0,0.0]
     bn_p_usd = [0.0,0.0]
@@ -65,9 +65,13 @@ def calc_kimp(ex: Exchanges, asset: str, maxUSD: float = 1000000000, CHECK_BACKW
 
     while True:
         try:
-            bnFut1st  = bn_fut_1st(ex, asset)
-            bnSpot1st = bn_spot_1st(ex, asset)
-            ubSpot1st = ub_spot_1st(ex, asset) #ask=0, bid=1
+            bn_fut_ob = bn_fut_orderbook (ex, asset)
+            bn_ob     = bn_spot_orderbook(ex, asset)
+            ub_ob     = ub_spot_orderbook(ex, asset)
+
+            bnFut1st  = bn_fut_depth (ex, asset, 0, bn_fut_ob)
+            bnSpot1st = bn_spot_depth(ex, asset, 0, bn_ob)
+            ubSpot1st = ub_spot_depth(ex, asset, 0, ub_ob)
             #선물이 백워데이션이면 안정될때까지 기다림
             if bn_is_backward(bnSpot1st, bnFut1st) and CHECK_BACKWARD:
                 print(f"[calc_kimp]Bn Fut BackWard futBid={bnFut1st[BID][0]} > spotAsk={bnSpot1st[ASK][0]} failed")
@@ -85,7 +89,6 @@ def calc_kimp(ex: Exchanges, asset: str, maxUSD: float = 1000000000, CHECK_BACKW
         except ReadTimeout as rt:
             print('[read_market_price] read time out.. retry')
             time.sleep(1)
-       
 
     #conv currency
     ub_p_usd[IN]  = round(ub_p_krw[IN]  / ex.krwPerUsd, 6)
@@ -99,7 +102,50 @@ def calc_kimp(ex: Exchanges, asset: str, maxUSD: float = 1000000000, CHECK_BACKW
     kimp[IN]  = round( (ub_p_usd[IN]/bn_p_usd[IN]-1)*100, 2)
     kimp[OUT] = round( (ub_p_usd[OUT]/bn_p_usd[OUT]-1)*100, 2)
 
-    return ub_p_krw, bn_p_usd, bn_f_usd, kimp 
+    bnFut2st  = bn_spot_depth(ex, asset, 1, bn_fut_ob)
+    bnSpot2st = bn_spot_depth(ex, asset, 1, bn_ob)
+    ubSpot2st = ub_spot_depth(ex, asset, 1, ub_ob)
+
+    # quantity calc
+    minUSD = 1000
+    maxUSD = maxUSD * 1.3 #margin 30%
+
+    ##in validity check (bn fut sell && bn spot buy)
+    bnFut1stAmt = bnFut1st[BID][P]*bnFut1st[BID][Q]
+    bnFut2stAmt = bnFut2st[BID][P]*bnFut2st[BID][Q]
+    fMinUSDCheck = bnFut1stAmt > minUSD and bnFut2stAmt > minUSD
+    fMaxUSDCheck = bnFut1stAmt > maxUSD and bnFut2stAmt > maxUSD*0.5
+    kimpFutSellValid = fMinUSDCheck and fMaxUSDCheck #<- Common for in&out
+
+    bnSpot1stAmt = bnSpot1st[ASK][P]*bnSpot1st[ASK][Q]
+    bnSpot2stAmt = bnSpot2st[ASK][P]*bnSpot2st[ASK][Q]
+    sMinUSDCheck = bnSpot1stAmt > minUSD and bnSpot2stAmt > minUSD
+    sMaxUSDCheck = bnSpot1stAmt > maxUSD and bnSpot2stAmt > maxUSD*0.5
+    kimpInSpotValid = sMinUSDCheck and sMaxUSDCheck
+
+    kimpInValid = kimpFutSellValid and kimpInSpotValid
+    if not kimpInValid:
+        print(f"[calc_kimp]not kimpInValid")
+        print(f"\t(bnFutSell) {bnFut1stAmt} {bnFut2stAmt} {fMinUSDCheck} {fMaxUSDCheck} => {kimpFutSellValid}")
+        print(f"\t(bnSpotBuy) {bnSpot1stAmt} {bnSpot2stAmt} {sMinUSDCheck} {sMaxUSDCheck} => {kimpInSpotValid}")
+        print(f"\t(common) {minUSD} {maxUSD}")
+
+    ##out validity check (ub spot buy && bn fut sell)
+    ubSpot1stAmt = ubSpot1st[ASK][P]*ubSpot1st[ASK][Q] / ex.krwPerUsd
+    ubSpot2stAmt = ubSpot2st[ASK][P]*ubSpot2st[ASK][Q] / ex.krwPerUsd
+    sMinUSDCheck = ubSpot1stAmt > minUSD and ubSpot2stAmt > minUSD
+    sMaxUSDCheck = ubSpot1stAmt > maxUSD and ubSpot2stAmt > maxUSD*0.5
+    kimpOutSpotValid = sMinUSDCheck and sMaxUSDCheck    
+
+    kimpOutValid = kimpFutSellValid and kimpOutSpotValid
+    if not kimpOutValid:
+        print(f"[calc_kimp]not kimpOutValid")
+        print(f"\t(bnFutSell) {bnFut1stAmt} {bnFut2stAmt} {fMinUSDCheck} {fMaxUSDCheck} => {kimpFutSellValid}")
+        print(f"\t(ubSpotBuy) {ubSpot1stAmt} {ubSpot2stAmt} {sMinUSDCheck} {sMaxUSDCheck} => {kimpOutSpotValid}")
+        print(f"\t(common) {minUSD} {maxUSD}")
+    
+    # price update
+    return ub_p_krw, bn_p_usd, bn_f_usd, kimp, [kimpInValid, kimpOutValid]
 
 def toUsd(ex: Exchanges, krw: float):
     return round(krw/ex.krwPerUsd,6)
@@ -163,12 +209,12 @@ def main():
 
         #asset_before = None #asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
         arbi_check_balace(ex, asset, maxUSD) #opt
-        ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset)
+        ub_p_krw, bn_p_usd, bn_f_usd, kimp, kimpValidity = calc_kimp(ex, asset)
 
         print(f"KIMP[IN] :{kimp[IN]}% (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN] })")
         print(f"KIMP[OUT]:{kimp[OUT]}% (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
-        if (STATUS_SKIP or status=='BN') and kimp[IN]>(IN_TH*IN_TRF_R):
+        if (STATUS_SKIP or status=='BN') and kimp[IN]>(IN_TH*IN_TRF_R) and kimpValidity[IN]:
             log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN]}) maxUSD={maxUSD*maxUSDInF} @ {now}")
             #asset_before = get_asset_total(ex, asset) 
             #log(f"(temp)asset_before:{asset_before}")
@@ -180,7 +226,7 @@ def main():
                 log_asset_total(ex, asset)
                 IN_TH = IN_TH + IN_TH_INC
 
-        elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH:
+        elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH and kimpValidity[OUT]:
             #maxUSD = 650
             log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) maxUSD={maxUSD*maxUSDOutF} @{now}")
             #asset_before = get_asset_total(ex, asset)

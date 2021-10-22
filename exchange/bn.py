@@ -5,18 +5,7 @@ import itertools
 from util.log import log
 from classes import *
 
-#const
-ASK = 0
-BID = 1
-
-BN_SPOT     = 5010
-BN_FUT      = 5011
-
-TRADE_BUY   = 6010
-TRADE_SELL  = 6011
-
-FUT_SHORT   = 7010
-FUT_LONG    = 7011
+from exchange.const import *
 
 
 #func
@@ -84,51 +73,35 @@ def bn_get_fut_margin_balance(ex: Exchanges, asset: str):
 def bn_usdt_pair(asset):
     return asset + 'USDT'
 
-def bn_spot_1st(ex: Exchanges, asset: str): #highest buying bids
-    depth = ex.binance.get_order_book(symbol=bn_usdt_pair(asset))
+def bn_spot_orderbook(ex: Exchanges, asset: str):
+    return ex.binance.get_order_book(symbol=bn_usdt_pair(asset))
 
-    a_t_p = round(float(depth['asks'][0][0]), 6)
-    a_av_q = float(depth['asks'][0][1])
-
-    b_t_p = round(float(depth['bids'][0][0]), 6)
-    b_av_q = float(depth['bids'][0][1])
-
-    return [[a_t_p, a_av_q],[b_t_p, b_av_q]]
-
-def bn_fut_1st(ex: Exchanges, asset: str): #highest buying bids
-    depth = ex.binance.futures_order_book(symbol=bn_usdt_pair(asset))
-
-    b_t_p = round(float(depth['bids'][0][0]), 6)
-    b_av_q = float(depth['bids'][0][1])
+def bn_spot_depth(ex: Exchanges, asset: str, depth: int, ob: dict=None): #highest buying bids
+    if ob is None:
+        ob = bn_spot_orderbook(ex, asset)    
     
-    a_t_p = round(float(depth['asks'][0][0]), 6)
-    a_av_q = float(depth['asks'][0][1])
+    a_t_p = round(float(ob['asks'][depth][0]), 6)
+    a_av_q = float(ob['asks'][depth][1])
+
+    b_t_p = round(float(ob['bids'][depth][0]), 6)
+    b_av_q = float(ob['bids'][depth][1])
 
     return [[a_t_p, a_av_q],[b_t_p, b_av_q]]
 
-def bn_spot_1st_bid(ex: Exchanges, asset: str): #highest buying bids
-    depth = ex.binance.get_order_book(symbol=bn_usdt_pair(asset))
-    t_p = round(float(depth['bids'][0][0]), 6)
-    av_q = float(depth['bids'][0][1])
-    return t_p, av_q
+def bn_fut_orderbook(ex: Exchanges, asset: str):
+    return ex.binance.futures_order_book(symbol=bn_usdt_pair(asset))
 
-def bn_spot_1st_ask(ex: Exchanges, asset: str): #lowest selling price
-    depth = ex.binance.get_order_book(symbol=bn_usdt_pair(asset))
-    t_p = round(float(depth['asks'][0][0]), 6)
-    av_q = float(depth['asks'][0][1])
-    return t_p, av_q
+def bn_fut_depth(ex: Exchanges, asset: str, depth: int, ob: dict=None): #highest buying bids
+    if ob is None:
+        ob = bn_fut_orderbook(ex, asset)
 
-def bn_fut_1st_bid(ex: Exchanges, asset: str):
-    depth = ex.binance.futures_order_book(symbol=bn_usdt_pair(asset))
-    t_p = round(float(depth['bids'][0][0]), 6)
-    av_q = float(depth['bids'][0][1])
-    return t_p, av_q
+    b_t_p = round(float(ob['bids'][depth][0]), 6)
+    b_av_q = float(ob['bids'][depth][1])
+    
+    a_t_p = round(float(ob['asks'][depth][0]), 6)
+    a_av_q = float(ob['asks'][depth][1])
 
-def bn_fut_1st_ask(ex: Exchanges, asset: str):
-    depth = ex.binance.futures_order_book(symbol=bn_usdt_pair(asset))
-    t_p = round(float(depth['asks'][0][0]), 6)
-    av_q = float(depth['asks'][0][1])
-    return t_p, av_q
+    return [[a_t_p, a_av_q],[b_t_p, b_av_q]]
 
 def bn_get_trade_type(tradeMode: int):
     if tradeMode == TRADE_BUY:

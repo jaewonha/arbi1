@@ -16,7 +16,7 @@ asset = 'EOS'
 OUT_TH = 100.0 #숫자가 작을때 (손해) 나가려고 하니 큰 숫자를 쓰면 무조건 나감
 IN_TH = 0.0 #숫자가 클떄 들어오(이득)려고 하니 작은 숫자를 쓰면 무조건 들어옴
 
-ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset)
+ub_p_krw, bn_p_usd, bn_f_usd, kimp, _ = calc_kimp(ex, asset)
 
 #print(bn_get_fut_pending_amt(ex, asset))
 #exit(0)

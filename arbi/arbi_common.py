@@ -12,7 +12,7 @@ def wait_bn_future_settle(ex: Exchanges, asset: str, bn_p_usd: float)->tuple[flo
     max_wait = 10
     permit_diff = 0.004 #asset -> price -> 3ticks
     for i in range(1,max_wait+1):
-        f_t_p, f_av_q = bn_fut_1st_bid(ex, asset)
+        f_t_p, f_av_q = bn_fut_depth(ex, asset, 0)[BID]
         diff = bn_p_usd - f_t_p #for short, f_t_p higher is okay
         if diff < permit_diff:
             break

@@ -29,10 +29,11 @@ while True:
         print(f"update krwPerUsd:{ex.krwPerUsd} at min:{lastMin}")
         log_flush()
 
-    ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset, CHECK_BACKWARD = False)
+    ub_p_krw, bn_p_usd, bn_f_usd, kimp, kimpValidity = calc_kimp(ex, asset, CHECK_BACKWARD = False, maxUSD = 5000)
 
     print(f"KIMP[IN] :{kimp[IN]}% (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN] })")
     print(f"KIMP[OUT]:{kimp[OUT]}% (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
+    print(f"KIMP Validity:{kimpValidity}")
     time.sleep(delay)
 
 

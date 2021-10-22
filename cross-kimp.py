@@ -78,7 +78,7 @@ class ThreadCalcKimpParam:
 '''
 def thread_calc_kimp(asset):
     if asset in skip_asset: return [0,99]
-    ub_p_krw, bn_p_usd, bn_f_usd, kimp = calc_kimp(ex, asset, CHECK_BACKWARD=False)
+    ub_p_krw, bn_p_usd, bn_f_usd, kimp, _ = calc_kimp(ex, asset, CHECK_BACKWARD=False)
     return kimp
 
 while True:
