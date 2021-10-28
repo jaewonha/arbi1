@@ -53,3 +53,18 @@ short 가능한 여러 코인 중 가장 min_out으로 나갔다가,
 
 
 -> in/out batch? process 분리? 
+
+10.25
+Exception has occurred: ReadTimeout       (note: full exception trace is shown but execution is paused at: <module>)
+HTTPSConnectionPool(host='fapi.binance.com', port=443): Read timed out. (read timeout=10)
+
+During handling of the above exception, another exception occurred:
+
+  File "<string>", line 3, in raise_from
+
+During handling of the above exception, another exception occurred:
+
+24480sec kimp in wait_kimp_inTh
+ex.binance.futures_order_book(symbol)
+
+모든 error에 대해 depence 필요. 

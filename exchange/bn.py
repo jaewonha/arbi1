@@ -6,7 +6,7 @@ from util.log import log
 from classes import *
 
 from exchange.const import *
-
+from binance.exceptions import BinanceAPIException, BinanceRequestException
 
 #func
 def bn_get_spot_balance(ex: Exchanges, asset: str, doRound: bool = True):
@@ -179,12 +179,18 @@ def bn_wait_order(ex: Exchanges, order: dict, type: int, TEST: bool):
 
     symbol = order['symbol']
     for i in itertools.count():
-        if type==BN_SPOT:
-            _order = ex.binance.get_order(symbol=symbol, orderId=order['orderId'])
-        elif type==BN_FUT:
-            _order = ex.binance.futures_get_order(symbol=symbol, orderId=order['orderId'])
-        else:
-            raise Exception('unknown type:{type}')
+        try:
+            if type==BN_SPOT:
+                _order = ex.binance.get_order(symbol=symbol, orderId=order['orderId'])
+            elif type==BN_FUT:
+                _order = ex.binance.futures_get_order(symbol=symbol, orderId=order['orderId'])
+            else:
+                raise Exception('unknown type:{type}')
+        except BinanceAPIException as bae:
+            if bae.status_code==2013:
+                print('order yet come. wait..')
+                time.sleep(1)
+                continue
 
         state = _order['status']
         print(f"[bn_wait_order]({i}) state={state}")

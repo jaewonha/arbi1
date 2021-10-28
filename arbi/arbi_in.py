@@ -28,6 +28,7 @@ def arbi_in_bnSpotBuy_bnFutShort(ex: Exchanges, asset: str, bn_p_usd: float, bn_
     bn_order_s = ret1.result()
     bn_order_f = ret2.result()
     
+    time.sleep(1)
     bn_wait_order(ex, bn_order_s, BN_SPOT, TEST)
     bn_wait_order(ex, bn_order_f, BN_FUT, TEST)
 

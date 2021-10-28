@@ -183,7 +183,7 @@ def main():
     log_open('log.txt')
     log(f"date:{datetime.now().strftime('%Y%m%d_%H%M%S')}")
     log(f"config: asset={asset}, status={status} STATUS_CHANGE={STATUS_CHANGE} OUT_TH={OUT_TH}, IN_TH={IN_TH}, maxUSD={maxUSD}")
-    
+    '''
     if ORDER_TEST:
         print('test order')
     else:
@@ -193,7 +193,7 @@ def main():
         else:
             print('not go')
             exit(0)
-
+    '''
     cnt = 0
     delay = 1
     lastMin = None
@@ -239,7 +239,7 @@ def main():
                 log_asset_total(ex, asset)
                 OUT_TH = OUT_TH + OUT_TH_DEC
 
-        if cnt > 5:
+        if cnt > 10:
             print(f"cnt{cnt} exit")
             exit(0)
         time.sleep(delay)

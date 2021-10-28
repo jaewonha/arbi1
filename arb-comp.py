@@ -27,7 +27,7 @@ asset  = 'EOS'
 bn_pair = asset + 'USDT'
 ub_pair = "KRW-" + asset
 krwPerUsd = krw_per_usd()
-if False: #force new download, False: use cached csv file
+if True: #force new download, False: use cached csv file
     print('download new data')
     client = Client()
 
