@@ -34,13 +34,13 @@ def arbi_out_ub_to_bn(ex: Exchanges, asset: str, ub_p_krw: float, bn_f_usd: floa
     #ex.binance.futures_change_leverage(bn_usdt_pair(asset), leverage=1)
 
     ### 2. Hedge & Buy ####
-    t_q = arbi_out_ubSpotBuy_bnFutShort(ex, asset, ub_p_krw, bn_f_usd, maxUSD, TEST)
+    t_q, t_q_fee = arbi_out_ubSpotBuy_bnFutShort(ex, asset, ub_p_krw, bn_f_usd, maxUSD, TEST)
 
     #### 3. swap exchange ####
-    arbi_out_withdraw_ub_to_bn(ex, asset, t_q)
+    arbi_out_withdraw_ub_to_bn(ex, asset, t_q, t_q_fee)
 
     #### 4. Sell & UnHedge ####
-    arbi_out_bnSpotSell_bnFutBuy(ex, asset, t_q, TEST)
+    arbi_out_bnSpotSell_bnFutBuy(ex, asset, t_q_fee, TEST)
 
     return True
 

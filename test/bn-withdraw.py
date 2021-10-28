@@ -3,6 +3,7 @@ from datetime import datetime, date, timedelta
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 from binance.exceptions import BinanceAPIException, BinanceOrderException
 import pprint
+from arbi import *
 #from binance import Client, AsyncClient, DepthCacheManager, BinanceSocketManager
 
 #BN - tadable
@@ -12,8 +13,6 @@ client = Client(api_key, sec_key)
 
 
 asset = 'EOS'
-ub_eos_addr = 'eosupbitsusr'
-ub_eos_memo = '5772f423-5c5a-4361-9678-2e070338fec1'
 
 withdraws = client.get_withdraw_history()
 #pprint.pprint(withdraws)

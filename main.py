@@ -12,6 +12,7 @@ from arbi import *
 
 IN = 0
 OUT = 1
+KIMP_VERBOSE = False
 
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
@@ -124,7 +125,7 @@ def calc_kimp(ex: Exchanges, asset: str, CHECK_BACKWARD = True, maxUSD: float = 
     kimpInSpotValid = sMinUSDCheck and sMaxUSDCheck
 
     kimpInValid = kimpFutSellValid and kimpInSpotValid
-    if not kimpInValid:
+    if not kimpInValid and KIMP_VERBOSE:
         print(f"[calc_kimp]not kimpInValid")
         print(f"\t(bnFutSell) {bnFut1stAmt} {bnFut2stAmt} {fMinUSDCheck} {fMaxUSDCheck} => {kimpFutSellValid}")
         print(f"\t(bnSpotBuy) {bnSpot1stAmt} {bnSpot2stAmt} {sMinUSDCheck} {sMaxUSDCheck} => {kimpInSpotValid}")
@@ -138,7 +139,7 @@ def calc_kimp(ex: Exchanges, asset: str, CHECK_BACKWARD = True, maxUSD: float = 
     kimpOutSpotValid = sMinUSDCheck and sMaxUSDCheck    
 
     kimpOutValid = kimpFutSellValid and kimpOutSpotValid
-    if not kimpOutValid:
+    if not kimpOutValid and KIMP_VERBOSE:
         print(f"[calc_kimp]not kimpOutValid")
         print(f"\t(bnFutSell) {bnFut1stAmt} {bnFut2stAmt} {fMinUSDCheck} {fMaxUSDCheck} => {kimpFutSellValid}")
         print(f"\t(ubSpotBuy) {ubSpot1stAmt} {ubSpot2stAmt} {sMinUSDCheck} {sMaxUSDCheck} => {kimpOutSpotValid}")

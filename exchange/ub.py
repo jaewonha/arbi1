@@ -193,3 +193,18 @@ def ub_cancel_or_refund(client, order, TEST):
 
         time.sleep(1)
 '''
+
+
+def ub_get_precision_pq(asset: str):
+    if asset == 'SC':
+        return 2, 3
+    else:
+        return 0, 3
+
+def ub_get_withdraw_fee(asset):
+    if asset == 'EOS': return 0
+    elif asset == 'TRX': return 1
+    elif asset == 'XRP': return 1
+    elif asset == 'DOGE': return 20
+    elif asset == 'SC': return 0.1
+    else: raise Exception(f'bn_get_withdraw_fee] unknown asset: {asset}')

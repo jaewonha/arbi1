@@ -7,6 +7,7 @@ import traceback
 from upbit.client import Upbit
 import pyupbit
 
+from arbi import *
 from exchange import *
 
 
@@ -27,12 +28,6 @@ binance = Client(bn_api_key, bn_sec_key)
 asset = 'EOS'
 ub_pair = ub_krw_pair(asset)
 bn_pair = bn_usdt_pair(asset)
-
-ub_eos_addr = 'eosupbitsusr'
-ub_eos_memo = '5772f423-5c5a-4361-9678-2e070338fec1'
-
-bn_eos_addr = 'binancecleos'
-bn_eos_memo = '109642124'
 
 IN_BN2UB_TEST = True
 OUT_UB2BN_TEST = True
