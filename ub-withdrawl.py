@@ -46,7 +46,9 @@ if IN_BN2UB_TEST:
     print(f"t_q:{t_q}")
 
     #3a. withdraw
-    withdraw_id = bn_withdraw(binance, asset, ub_eos_addr, ub_eos_memo, t_q)
+    addr = ub_get_asset_addr(asset)
+    memo = ub_get_asset_memo(asset)
+    withdraw_id = bn_withdraw(binance, asset, addr, memo, t_q)
     #withdraw_id = '43fa4ae2f0ee4d1198287a454a0bd72f'
     print(f"withdraw_id:{withdraw_id}")
 
@@ -75,7 +77,9 @@ if OUT_UB2BN_TEST:
     print(f"t_q:{t_q}")
 
     #3a. withdraw
-    uuid = ub_withdraw(upbit2, asset, t_q, bn_eos_addr, bn_eos_memo)
+    addr = bn_get_asset_addr(asset)
+    memo = bn_get_asset_memo(asset)
+    uuid = ub_withdraw(upbit2, asset, t_q, addr, memo)
     #uuid = 'ca81f1e3-d019-4350-b739-d6b110a03f08'
     print(f"uuid:{uuid}")
 

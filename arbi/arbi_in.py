@@ -38,7 +38,9 @@ def arbi_in_withdraw_bn_to_ub(ex: Exchanges, asset: str, t_q: float, t_q_fee: fl
     bn_wait_balance(ex, asset, t_q)
 
     #3a. withdraw
-    withdraw_id = bn_withdraw(ex, asset, ub_eos_addr, ub_eos_memo, t_q)
+    addr = ub_get_asset_addr(asset)
+    memo = ub_get_asset_memo(asset)
+    withdraw_id = bn_withdraw(ex, asset, addr, memo, t_q)
     print(f"withdraw_id:{withdraw_id}")
 
     #3b. wait finished - BN

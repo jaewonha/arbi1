@@ -5,7 +5,7 @@ from main import *
 
 ex = Exchanges()
 
-asset = 'EOS'
+asset = 'DOGE'
 maxUSD = 20
 OUT_TH = 100.0 #숫자가 작을때 (손해) 나가려고 하니 큰 숫자를 쓰면 무조건 나감
 IN_TH = 0.0 #숫자가 클떄 들어오(이득)려고 하니 작은 숫자를 쓰면 무조건 들어옴

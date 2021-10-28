@@ -10,7 +10,11 @@ from concurrent.futures import ThreadPoolExecutor
 def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn_f_usd: float, maxUSD: float, TEST: bool):
     # #2a. Spot Buy
     maxKRW = maxUSD*ex.krwPerUsd
-    t_q = floor_1(maxKRW/ub_p_krw)
+    prec_p, prec_q = bn_get_precision_pq(asset)
+    ub_p_krw = floor(ub_p_krw, prec_p) #floor target price to precision
+    t_q = floor(maxKRW/ub_p_krw, prec_q) #spot 4, future 1 #<-
+    fee = ub_get_withdraw_fee(asset)
+    t_q_fee = floor(t_q-fee, prec_q) 
     ub_order = bn_order = None
 
     # #2b. Futures Short
@@ -36,11 +40,13 @@ def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn
         #if ub_order:    ub_cancel_or_refund(upbit, ub_order, UB_SPOT, asset, TEST)
         #if bn_order:    bn_cancel_or_refund(binance, bn_order, BN_FUT, asset, TEST)
 
-    return t_q
+    return t_q, t_q_fee
 
-def arbi_out_withdraw_ub_to_bn(ex: Exchanges, asset: str, t_q: float):
+def arbi_out_withdraw_ub_to_bn(ex: Exchanges, asset: str, t_q: float, t_q_fee: float):
     ub_wait_balance(ex, asset, t_q)
-    withdraw_uuid = ub_withdraw(ex, asset, t_q, bn_eos_addr, bn_eos_memo)
+    addr = bn_get_asset_addr(asset)
+    memo = bn_get_asset_memo(asset)
+    withdraw_uuid = ub_withdraw(ex, asset, t_q, addr, memo)
     print(f"withdraw_uuid:{withdraw_uuid}")
 
     #3b. wait finished - UB
@@ -49,7 +55,7 @@ def arbi_out_withdraw_ub_to_bn(ex: Exchanges, asset: str, t_q: float):
 
     #3c. wait deposit - BN
     bn_wait_deposit(ex, asset, txid)
-    bn_wait_balance(ex, asset, t_q) #wait balance available
+    bn_wait_balance(ex, asset, t_q_fee) #wait balance available
 
 '''
 def wait_kimp_outTh(binance, asset, krwPerUsd, outTh):

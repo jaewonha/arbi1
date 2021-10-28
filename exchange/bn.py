@@ -5,6 +5,7 @@ import itertools
 from util.log import log
 from classes import *
 
+from arbi.arbi_common import *
 from exchange.const import *
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 
@@ -337,6 +338,22 @@ def bn_get_fut_pending_amt(ex: Exchanges, asset: str)->float:
 def bn_is_backward(bnSpot1st, bnFut1st)->bool: #type hint float array
     return bnFut1st[BID][0] + 0.002 < bnSpot1st[ASK][0] #2tick
 
+
+def bn_get_asset_addr(asset: str):
+    if asset == 'EOS': return bn_eos_addr
+    elif asset == 'XRP': return bn_xrp_addr
+    elif asset == 'TRX': return bn_trx_addr
+    elif asset == 'DOGE': return bn_doge_addr
+    elif asset == 'SC': return bn_sc_addr
+    else: raise Exception(f'[bn_get_asset_addr] not supported asset={asset}')
+
+def bn_get_asset_memo(asset: str):
+    if asset == 'EOS': return bn_eos_memo
+    elif asset == 'XRP': return bn_xrp_memo
+    elif asset == 'TRX': return ''
+    elif asset == 'DOGE': return ''
+    elif asset == 'SC': return ''
+    else: raise Exception(f'[bn_get_asset_memo] not supported asset={asset}')
 
 def bn_get_precision_pq(asset: str):
     if asset == 'EOS': return 3, 1 #p, q

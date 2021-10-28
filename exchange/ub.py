@@ -5,6 +5,7 @@ import itertools
 from classes.Exchanges import Exchanges
 from util.log import log
 from classes import *
+
 from exchange.const import *
 
 
@@ -193,6 +194,22 @@ def ub_cancel_or_refund(client, order, TEST):
 
         time.sleep(1)
 '''
+
+def ub_get_asset_addr(asset: str):
+    if asset == 'EOS': return ub_eos_addr
+    elif asset == 'XRP': return ub_xrp_addr
+    elif asset == 'TRX': return ub_trx_addr
+    elif asset == 'DOGE': return ub_doge_addr
+    elif asset == 'SC': return ub_sc_addr
+    else: raise Exception(f'[ub_get_asset_addr] not supported asset={asset}')
+
+def ub_get_asset_memo(asset: str):
+    if asset == 'EOS': return ub_eos_memo
+    elif asset == 'XRP': return ub_xrp_memo
+    elif asset == 'TRX': return ''
+    elif asset == 'DOGE': return ''
+    elif asset == 'SC': return ''
+    else: raise Exception(f'[ub_get_asset_memo] not supported asset={asset}')
 
 
 def ub_get_precision_pq(asset: str):
