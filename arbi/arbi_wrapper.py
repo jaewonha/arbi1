@@ -5,8 +5,9 @@ from arbi.arbi_out import *
 
 def arbi_check_balace(ex: Exchanges, asset:str, maxUSD: float):
     assert check_fee_bnb(ex, maxUSD)
-    #assert check_bn_balance(ex, maxUSD)
+    assert check_bn_balance(ex, maxUSD) #wallet usdt balance for bn exit
     assert check_bn_fut_margin_balance(ex, asset, maxUSD)
+    assert check_ub_balance(ex, maxUSD)
     
 def arbi_in_bn_to_ub(ex: Exchanges, asset: str, bn_p_usd: float, bn_f_usd: float, maxUSD: float, inTh: float, TEST: bool =True, BALANCED_CHEKED: bool =False):
     #1. check balance
