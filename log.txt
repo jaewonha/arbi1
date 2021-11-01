@@ -2812,3 +2812,30 @@ config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.5, IN_TH=9.5, maxUSD=3
 date:20211029_114416
 config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=2.5, IN_TH=9.5, maxUSD=3700
 [20211029_114416]balance:[97.68, 27819.4, 4268.97, 0.71]=>32186.76
+date:20211101_013304
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=1.4, IN_TH=5.0, maxUSD=5000
+[20211101_013304]balance:[24583.42, 22819.4, 9265.27, 0.7]=>56668.79
+>>> time to flight(UB->BN)! kimp=1.39 (UB=4.607173, BN=4.544) maxUSD=5000.0 @2021-11-01 01:33:04.944111
+[bn_fut_SELL]EOSUSDT 1085.2q @ 4.546$, TEST=False
+[ub_spot_buy]KRW-EOS 1085.2q @ 5395.0W(4.6072$), TEST=False
+[bn_spot_SELL]EOSUSDT 1085.2q @ 4.546$, TEST=False
+[bn_fut_BUY]EOSUSDT 1085.2q @ 4.55$, TEST=False
+[20211101_014022]balance:[19581.22, 27752.7, 9260.93, 0.7]=>56595.55
+>>> time to flight(UB->BN)! kimp=1.19 (UB=4.607173, BN=4.553) maxUSD=5000.0 @2021-11-01 01:42:49.224407
+[ub_spot_buy]KRW-EOS 1085.2q @ 5395.0W(4.6072$), TEST=False
+[bn_fut_SELL]EOSUSDT 1085.2q @ 4.554$, TEST=False
+[bn_spot_SELL]EOSUSDT 1085.2q @ 4.563$, TEST=False
+[bn_fut_BUY]EOSUSDT 1085.2q @ 4.566$, TEST=False
+[20211101_015200]balance:[14579.01, 32704.5, 9247.91, 0.71]=>56532.13
+>>> time to flight(UB->BN)! kimp=1.16 (UB=4.615713, BN=4.563) maxUSD=5000.0 @2021-11-01 01:52:01.168984
+[ub_spot_buy]KRW-EOS 1083.2q @ 5405.0W(4.6157$), TEST=False
+[bn_fut_SELL]EOSUSDT 1083.2q @ 4.565$, TEST=False
+[bn_spot_SELL]EOSUSDT 1083.2q @ 4.558$, TEST=False
+[bn_fut_BUY]EOSUSDT 1083.2q @ 4.562$, TEST=False
+[20211101_015832]balance:[9576.77, 37641.7, 9251.16, 0.71]=>56470.34
+>>> time to flight(UB->BN)! kimp=1.09 (UB=4.594364, BN=4.545) maxUSD=5000.0 @2021-11-01 03:34:20.268873
+[ub_spot_buy]KRW-EOS 1088.2q @ 5380.0W(4.5944$), TEST=False
+[bn_fut_SELL]EOSUSDT 1088.2q @ 4.548$, TEST=False
+[bn_spot_SELL]EOSUSDT 1088.2q @ 4.552$, TEST=False
+[bn_fut_BUY]EOSUSDT 1088.2q @ 4.556$, TEST=False
+[20211101_034027]balance:[4574.69, 42595.2, 9242.45, 0.7]=>56413.04

@@ -345,6 +345,7 @@ def bn_get_asset_addr(asset: str):
     elif asset == 'TRX': return bn_trx_addr
     elif asset == 'DOGE': return bn_doge_addr
     elif asset == 'SC': return bn_sc_addr
+    elif asset == 'FLOW': return bn_flow_addr
     else: raise Exception(f'[bn_get_asset_addr] not supported asset={asset}')
 
 def bn_get_asset_memo(asset: str):
@@ -353,6 +354,7 @@ def bn_get_asset_memo(asset: str):
     elif asset == 'TRX': return ''
     elif asset == 'DOGE': return ''
     elif asset == 'SC': return ''
+    elif asset == 'FLOW': return ''
     else: raise Exception(f'[bn_get_asset_memo] not supported asset={asset}')
 
 def bn_get_precision_pq(asset: str):
@@ -361,6 +363,7 @@ def bn_get_precision_pq(asset: str):
     elif asset == 'TRX': return 5, 1
     elif asset == 'DOGE': return 4, 0 
     elif asset == 'SC': return 5, 0 
+    elif asset == 'FLOW': return 2, 2 
     else: raise Exception(f'[bn_get_precision_p] not supported asset={asset}')
 
 def bn_get_withdraw_fee(asset):
@@ -369,5 +372,6 @@ def bn_get_withdraw_fee(asset):
     elif asset == 'XRP': return 0.25
     elif asset == 'DOGE': return 5
     elif asset == 'SC': return 0.1
+    elif asset == 'FLOW': return 0.01
     else: raise Exception(f'bn_get_withdraw_fee] unknown asset: {asset}')
 

@@ -40,3 +40,12 @@ bn_doge_addr = 'DCbpph4x46jDtnNp6h648vrWFCJUkCbwG6'
 ##sc
 ub_sc_addr = '2cba9e8f39146ec5d28247afe74639b0c4edd172e97e20f9fd39fb5ddf0ab7d274a945060d51' #6confirm
 bn_sc_addr = '31be1f97f7f71e18a9323c56463ab705cca7e1acff112310e3dbcb22872d4009128eaab766a5'
+
+#storj, #sc -> erc20.
+
+#flow #<-no fut on binance, need ftx integration
+ub_flow_addr = '0x7465574909f5641d'
+bn_flow_addr = '0x71ce64836c9caff3'
+
+
+#elf, mbl <- no fut on binance

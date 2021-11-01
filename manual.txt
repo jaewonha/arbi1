@@ -1,0 +1,19 @@
+*adding new asset
+1. const.py
+- addr, memo
+
+2. bn.py
+- asset_addr, asset_memo func
+- precision pq
+- withdraw_fee func
+
+3. ub.py
+- addr, memo
+- precision
+- withdrawl withdraw_fee
+
+4. register upbit api address
+
+5. test
+
+-. flow no fut on bn -> ftx integration?

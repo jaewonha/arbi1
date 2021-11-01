@@ -201,6 +201,7 @@ def ub_get_asset_addr(asset: str):
     elif asset == 'TRX': return ub_trx_addr
     elif asset == 'DOGE': return ub_doge_addr
     elif asset == 'SC': return ub_sc_addr
+    elif asset == 'FLOW': return ub_flow_addr
     else: raise Exception(f'[ub_get_asset_addr] not supported asset={asset}')
 
 def ub_get_asset_memo(asset: str):
@@ -209,6 +210,7 @@ def ub_get_asset_memo(asset: str):
     elif asset == 'TRX': return ''
     elif asset == 'DOGE': return ''
     elif asset == 'SC': return ''
+    elif asset == 'FLOW': return ''
     else: raise Exception(f'[ub_get_asset_memo] not supported asset={asset}')
 
 
@@ -224,4 +226,5 @@ def ub_get_withdraw_fee(asset):
     elif asset == 'XRP': return 1
     elif asset == 'DOGE': return 20
     elif asset == 'SC': return 0.1
+    elif asset == 'FLOW': return 0.3
     else: raise Exception(f'bn_get_withdraw_fee] unknown asset: {asset}')
