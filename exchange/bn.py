@@ -133,6 +133,23 @@ def bn_spot_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: fl
             price=t_p,
             quantity=t_q)
 
+def bn_spot_trade_market(ex: Exchanges, asset: str, tradeMode: int, t_q: float, TEST: bool = True):
+    pair = bn_usdt_pair(asset)
+    tradeType = bn_get_trade_type(tradeMode)
+    log(f"[bn_spot_{tradeType}_market]{pair} {t_q}q, TEST={TEST}")
+    if TEST:
+        return ex.binance.create_test_order(
+            symbol=pair,
+            side=tradeType,
+            type=Client.ORDER_TYPE_MARKET,
+            quantity=t_q)
+    else:
+        return ex.binance.create_order(
+            symbol=pair,
+            side=tradeType,
+            type=Client.ORDER_TYPE_MARKET,
+            quantity=t_q)
+
 def bn_fut_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: float, TEST: bool = True):
     tradeType = bn_get_trade_type(tradeMode)
     pair = bn_usdt_pair(asset)
@@ -152,6 +169,23 @@ def bn_fut_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: flo
             type=Client.ORDER_TYPE_LIMIT,
             timeInForce='GTC',
             price=t_p,
+            quantity=t_q)
+
+def bn_fut_trade_market(ex: Exchanges, asset: str, tradeMode: int, t_q: float, TEST: bool = True):
+    tradeType = bn_get_trade_type(tradeMode)
+    pair = bn_usdt_pair(asset)
+    log(f"[bn_fut_{tradeType}_market]{pair} {t_q}q, TEST={TEST}")
+    if TEST:
+        return ex.binance.create_test_order(
+            symbol=pair,
+            side=tradeType,
+            type=Client.ORDER_TYPE_MARKET,
+            quantity=t_q)
+    else:
+        return ex.binance.futures_create_order(
+            symbol=pair,
+            side=tradeType,
+            type=Client.ORDER_TYPE_MARKET,
             quantity=t_q)
 
 async def a_bn_fut_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: float, TEST: bool = True):
@@ -201,7 +235,7 @@ def bn_wait_order(ex: Exchanges, order: dict, type: int, TEST: bool):
         elif state == 'CANCELED' or state == 'REJECTED' or state == 'EXPIRED':
             raise Exception('[bn_wait_order]:order {state}')
         elif state == 'FILLED':
-            break
+            return _order
 
         time.sleep(1)
 
