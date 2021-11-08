@@ -2839,3 +2839,12 @@ config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=1.4, IN_TH=5.0, maxUSD=5
 [bn_spot_SELL]EOSUSDT 1088.2q @ 4.552$, TEST=False
 [bn_fut_BUY]EOSUSDT 1088.2q @ 4.556$, TEST=False
 [20211101_034027]balance:[4574.69, 42595.2, 9242.45, 0.7]=>56413.04
+date:20211101_191132
+config: asset=EOS, status=BN STATUS_CHANGE=False OUT_TH=1.4, IN_TH=5.0, maxUSD=4500
+[20211101_191132]balance:[4545.57, 42595.2, 9244.58, 0.71]=>56386.06
+>>> time to flight(UB->BN)! kimp=0.29 (UB=4.658464, BN=4.645) maxUSD=4500.0 @2021-11-01 19:11:32.683117
+[ub_spot_buy]KRW-EOS 965.9q @ 5490.0W(4.6585$), TEST=False
+[bn_fut_SELL]EOSUSDT 965.9q @ 4.648$, TEST=False
+[bn_spot_SELL]EOSUSDT 965.9q @ 4.634$, TEST=False
+[bn_fut_BUY]EOSUSDT 965.9q @ 4.639$, TEST=False
+[20211101_192145]balance:[43.71, 47071.2, 9253.28, 0.71]=>56368.9

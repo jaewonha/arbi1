@@ -13,7 +13,7 @@ import time as time_module
 ex = Exchanges()
 asset = 'OMG'
 
-t_q = 10
+t_q = 1
 TEST = False
 
 def timed_task():
@@ -25,7 +25,8 @@ def timed_task():
 
     while True: #wait next seconds
         t2 = datetime.datetime.now()
-        if int(t1.second) != int(t2.second):
+        #if int(t1.second) != int(t2.second):
+        if int(t2.second) == 1:
             break
 
     print(t2)
@@ -51,8 +52,10 @@ def timed_task():
 
 
 scheduler = sched.scheduler(time_module.time, time_module.sleep)
-#t = time_module.strptime('2021-11-07 23:47:59', '%Y-%m-%d %H:%M:%S')
-t = time_module.strptime('2021-11-08 12:59:59', '%Y-%m-%d %H:%M:%S')
+#t = time_module.strptime('2021-11-08 15:15:59', '%Y-%m-%d %H:%M:%S')
+t = time_module.strptime('2021-11-0 8 00:59:58', '%Y-%m-%d %H:%M:%S') #1am
+#t = time_module.strptime('2021-11-08 08:59:58', '%Y-%m-%d %H:%M:%S') #9am
+#t = time_module.strptime('2021-11-08 16:59:58', '%Y-%m-%d %H:%M:%S') #17pm
 t = time_module.mktime(t)
 scheduler_e = scheduler.enterabs(t, 1, timed_task, ())
 scheduler.run()

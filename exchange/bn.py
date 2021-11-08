@@ -220,12 +220,13 @@ def bn_wait_order(ex: Exchanges, order: dict, type: int, TEST: bool):
             elif type==BN_FUT:
                 _order = ex.binance.futures_get_order(symbol=symbol, orderId=order['orderId'])
             else:
-                raise Exception('unknown type:{type}')
+                raise Exception(f'unknown type:{type}')
         except BinanceAPIException as bae:
-            if bae.status_code==2013:
-                print('order yet come. wait..')
-                time.sleep(1)
-                continue
+            print(bae)
+            #if bae.status_code==2013: -2013 NO_SUCH_ORDER #https://binance-docs.github.io/apidocs/futures/en/#11xx-request-issues
+            print(f'order yet come. wait.. error_code:{bae.status_code}')
+            time.sleep(1)
+            continue
 
         state = _order['status']
         print(f"[bn_wait_order]({i}) state={state}")
