@@ -52,10 +52,10 @@ def timed_task():
 
 
 scheduler = sched.scheduler(time_module.time, time_module.sleep)
-#t = time_module.strptime('2021-11-08 15:15:59', '%Y-%m-%d %H:%M:%S')
-t = time_module.strptime('2021-11-0 8 00:59:58', '%Y-%m-%d %H:%M:%S') #1am
-#t = time_module.strptime('2021-11-08 08:59:58', '%Y-%m-%d %H:%M:%S') #9am
-#t = time_module.strptime('2021-11-08 16:59:58', '%Y-%m-%d %H:%M:%S') #17pm
+#t = time_module.strptime('2021-11-09 15:15:59', '%Y-%m-%d %H:%M:%S')
+t = time_module.strptime('2021-11-09 00:59:58', '%Y-%m-%d %H:%M:%S') #1am
+#t = time_module.strptime('2021-11-09 08:59:58', '%Y-%m-%d %H:%M:%S') #9am
+#t = time_module.strptime('2021-11-09 16:59:58', '%Y-%m-%d %H:%M:%S') #17pm
 t = time_module.mktime(t)
 scheduler_e = scheduler.enterabs(t, 1, timed_task, ())
 scheduler.run()
