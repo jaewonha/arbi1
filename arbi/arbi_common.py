@@ -18,7 +18,7 @@ def wait_bn_future_settle(ex: Exchanges, asset: str, bn_p_usd: float)->tuple[flo
 
 
 def check_fee_bnb(ex: Exchanges, maxUSD: float)->bool:
-    bnb_q = bn_get_spot_balance(ex, 'BNB') 
+    bnb_q = bn_get_spot_balance(ex, 'BNB', False) 
     bnb_fut_q = bn_fut_acc_asset_balance(ex, 'BNB') 
     bnb_price = float(ex.binance.get_symbol_ticker(symbol='BNBUSDT')['price'])
     

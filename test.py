@@ -13,6 +13,11 @@ TEST = False
 TEST_OUT = False
 TEST_IN = True
 
+#test
+q = ub_get_spot_balance(ex, ub_krw_pair('boba'))
+print(q)
+exit(0)
+
 if True: #exchange test
     arbi_check_balace(ex, asset, maxUSD) #opt
 
