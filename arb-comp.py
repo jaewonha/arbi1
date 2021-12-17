@@ -22,7 +22,7 @@ from conv.krw2usd import krw_per_usd
 from classes.ArbiRange import ArbiRange
 from util.time import *
     
-days = 14
+days = 1
 asset  = 'EOS'
 bn_pair = asset + 'USDT'
 ub_pair = "KRW-" + asset

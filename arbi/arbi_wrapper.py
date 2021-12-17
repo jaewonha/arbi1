@@ -4,15 +4,21 @@ from arbi.arbi_in import *
 from arbi.arbi_out import *
 
 def arbi_check_balace(ex: Exchanges, asset:str, maxUSD: float):
-    assert check_fee_bnb(ex, maxUSD)
-    assert check_bn_balance(ex, maxUSD) #BN->UB 안한다면 주석처리
-    assert check_bn_fut_margin_balance(ex, asset, maxUSD)
-    assert check_ub_balance(ex, maxUSD)
+    Common1 = check_fee_bnb(ex, maxUSD)
+    Common2 = check_bn_fut_margin_balance(ex, asset, maxUSD)
+    bnBalance = check_bn_balance(ex, maxUSD) #BN->UB 안한다면 주석처리
+    ubBalance = check_ub_balance(ex, maxUSD)
+    return {
+        'Common': Common1 and Common2,
+        'bnBalance': bnBalance,
+        'ubBalance': ubBalance,
+    }
     
-def arbi_in_bn_to_ub(ex: Exchanges, asset: str, bn_p_usd: float, bn_f_usd: float, maxUSD: float, inTh: float, TEST: bool =True, BALANCED_CHEKED: bool =False):
+def arbi_in_bn_to_ub(ex: Exchanges, asset: str, bn_p_usd: float, bn_f_usd: float, maxUSD: float, inTh: float, TEST: bool =True, BALANCED_CHECKED: bool =False):
     #1. check balance
-    if not BALANCED_CHEKED:
-        arbi_check_balace(ex, asset, maxUSD)
+    if not BALANCED_CHECKED:
+        check = arbi_check_balace(ex, asset, maxUSD)
+        assert check['Common'] and check['bnBalance']
 
     # 2. Hedge & Buy
     t_q, t_q_fee = arbi_in_bnSpotBuy_bnFutShort(ex, asset, bn_p_usd, bn_f_usd, maxUSD, TEST)
@@ -29,7 +35,8 @@ def arbi_in_bn_to_ub(ex: Exchanges, asset: str, bn_p_usd: float, bn_f_usd: float
 def arbi_out_ub_to_bn(ex: Exchanges, asset: str, ub_p_krw: float, bn_f_usd: float, maxUSD: float, TEST: bool =True, BALANCED_CHEKED: bool =False):
     #1. check balance
     if not BALANCED_CHEKED:
-        arbi_check_balace(ex, asset, maxUSD)
+        check = arbi_check_balace(ex, asset, maxUSD)
+        assert check['Common'] and check['ubBalance']
 
     #future account balance & leverage check
     #ex.binance.futures_change_leverage(bn_usdt_pair(asset), leverage=1)

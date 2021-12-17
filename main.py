@@ -209,13 +209,14 @@ def main():
             log_flush()
 
         #asset_before = None #asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
-        arbi_check_balace(ex, asset, maxUSD) #opt
+        check = arbi_check_balace(ex, asset, maxUSD) #opt
+        assert check['Common']
         ub_p_krw, bn_p_usd, bn_f_usd, kimp, kimpValidity = calc_kimp(ex, asset)
 
         print(f"KIMP[IN] :{kimp[IN]}% (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN] })")
         print(f"KIMP[OUT]:{kimp[OUT]}% (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
     
-        if (STATUS_SKIP or status=='BN') and kimp[IN]>(IN_TH*IN_TRF_R) and kimpValidity[IN]:
+        if (STATUS_SKIP or status=='BN') and kimp[IN]>(IN_TH*IN_TRF_R) and kimpValidity[IN] and check['bnBalance']:
             log(f"<<< time to get-in(BN->UB)! kimp={kimp[IN]} (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN]}) maxUSD={maxUSD*maxUSDInF} @ {now}")
             #asset_before = get_asset_total(ex, asset) 
             #log(f"(temp)asset_before:{asset_before}")
@@ -227,7 +228,7 @@ def main():
                 log_asset_total(ex, asset)
                 IN_TH = IN_TH + IN_TH_INC
 
-        elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH and kimpValidity[OUT]:
+        elif (STATUS_SKIP or status=='UB') and kimp[OUT]<OUT_TH and kimpValidity[OUT] and check['ubBalance']:
             #maxUSD = 650
             log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) maxUSD={maxUSD*maxUSDOutF} @{now}")
             #asset_before = get_asset_total(ex, asset)
