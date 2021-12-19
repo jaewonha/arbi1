@@ -61,6 +61,32 @@ def ub_spot_trade(ex: Exchanges, asset: str, tradeMode: int, t_p: float, t_q: fl
         print(f"ub_get_trade_type:invalide mode={tradeMode}")
         exit(0)
 
+def ub_spot_trade_market(ex: Exchanges, asset: str, tradeMode: int, t_p: int, t_q: float, TEST: bool):
+    pair = ub_krw_pair(asset)
+    log(f"[ub_spot_{ub_get_trade_type(tradeMode)}_market]{pair} {t_q}q, TEST={TEST}")
+    if TEST:
+        return
+
+    if tradeMode == TRADE_BUY and t_p is not None:
+        return ex.upbitClient.Order.Order_new(
+            market=pair,
+            side= 'bid',
+            price=str(t_p),
+            ord_type='market'
+        )
+    elif tradeMode == TRADE_SELL and t_q is not None:
+        return ex.upbitClient.Order.Order_new(
+            market=pair,
+            side= 'ask',
+            volume=str(t_q),
+            ord_type='market'
+        )
+    else:
+        print(f"ub_get_trade_type:invalide mode={tradeMode}")
+        exit(0)
+
+    
+
 def ub_withdraw(ex: Exchanges, asset: str, t_q: float, addr: str, tag: str):
     print(f"ub_withdraw:{asset} {t_q}q to {addr} with {tag}")
     try:
