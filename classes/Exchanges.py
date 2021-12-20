@@ -1,5 +1,5 @@
-import pyupbit
-from upbit.client import Upbit
+#import pyupbit
+#from upbit.client import Upbit
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
 from classes import *
