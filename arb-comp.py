@@ -40,7 +40,6 @@ if True: #force new download, False: use cached csv file
     #klines = client.get_historical_klines(bn_pair, Client.KLINE_INTERVAL_1HOUR, str(from_ts))
     klines2 = np.delete(klines, range(5,12), axis=1)
 
-    
     for i in range(0, len(klines2)):
         klines2[i][0] = utc_to_str(klines2[i][0], True)
         
