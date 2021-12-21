@@ -36,11 +36,16 @@ config['symbol'] = config['asset'] + "USDT"
 
 df = Key = None
 figZoom = figPan = None #prevent garbage collection
+bol_upper = bol_lower = None
 
 def main():
     downloadPrev(config)
     initGraph(config)
+    applyStrategy(config)
     #launchStream(config)
+
+def applyStrategy(config):
+    pass
 
 def downloadPrev(config, useCached:bool = True):
     global df
@@ -72,28 +77,39 @@ def downloadPrev(config, useCached:bool = True):
 #https://tradewithpython.com/generating-buy-sell-signals-using-python
 def initGraph(config):
     global df, figZoom, figPan
-    #moving average
-    mav5 = df["Close"].rolling(5).mean().values
-    mav10 = df["Close"].rolling(10).mean().values
-    mav20 = df["Close"].rolling(20).mean().values
-    mav40 = df["Close"].rolling(40).mean().values
-    mav60 = df["Close"].rolling(60).mean().values
-    mav120 = df["Close"].rolling(120).mean().values
+    global bol_upper, bol_lower
+    #generate processed data
+    ma5  = df["Close"].rolling(5).mean().values
+    ma10 = df["Close"].rolling(10).mean().values
+    ma20 = df["Close"].rolling(20).mean().values
+    ma40 = df["Close"].rolling(40).mean().values
+    ma60 = df["Close"].rolling(60).mean().values
+    ma120 = df["Close"].rolling(120).mean().values
     std20 = df["Close"].rolling(20).std()
-    bol_upper = mav20 + 2*std20
-    bol_lower = mav20 - 2*std20
-    #mavdf = pd.DataFrame(dict(OpMav5=mav5,OpMav10=mav10,OpMav20=mav20,OpMav40=mav40,OpMav60=mav60,OpMav120=mav120),index=df.index)
-    #mavdf = pd.DataFrame(dict(BollUpper=bol_upper,BollLower=bol_lower, OpMav5=mav5,OpMav10=mav10,OpMav20=mav20,OpMav40=mav40,OpMav60=mav60,OpMav120=mav120),index=df.index)
-    mavdf = pd.DataFrame(dict(OpMav20=mav20, BollUpper=bol_upper,BollLower=bol_lower),index=df.index)
-    ap = mpf.make_addplot(mavdf,type='line', width= 0.5, alpha = 1.0)
+    bol_upper = ma20 + 2*std20
+    bol_lower = ma20 - 2*std20
+    buySignal  = df[df['Close'] <= bol_lower]['Close'].to_frame('buySignal')
+    sellSignal = df[df['Close'] >= bol_upper]['Close'].to_frame('sellSignal')
+    buySignal2  = pd.concat([df['Close'],buySignal], axis=1)['buySignal']
+    sellSignal2 = pd.concat([df['Close'],sellSignal], axis=1)['sellSignal']
+    #construct addplot
+    ma_df = pd.DataFrame(dict(Opma5=ma5,Opma10=ma10,Opma20=ma20,Opma40=ma40,Opma60=ma60,Opma120=ma120),index=df.index)
+    boll_df = pd.DataFrame(dict(MA20=ma20, BollUpper=bol_upper,BollLower=bol_lower),index=df.index)
+    ap = [
+        #mpf.make_addplot(ma_df, type='line', width= 0.5, alpha = 1.0),
+        mpf.make_addplot(boll_df, type='line', width= 0.5, alpha = 1.0),
+        mpf.make_addplot(buySignal2, type='scatter', marker='^', markersize=10, color='g'),
+        mpf.make_addplot(sellSignal2,type='scatter', marker='v', markersize=10, color='r'),
+    ]
     #candle coloring
     mc = mpf.make_marketcolors(
-                            up='tab:blue',down='tab:red',
-                            edge='lime',
-                            wick={'up':'blue','down':'red'},
-                            volume='tab:green',
-                           )
+            up='tab:red',down='tab:green',
+            edge='lime',
+            wick={'up':'red','down':'green'},
+            volume='tab:blue',
+        )
     s  = mpf.make_mpf_style(marketcolors=mc)
+
     fig, axes = mpf.plot(df,returnfig=True,figsize=(11,8), \
         volume=True, ylabel_lower='Volume', \
         type='candle',title=config['symbol'], show_nontrading=True, style=s, addplot=ap)
