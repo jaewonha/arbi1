@@ -47,16 +47,19 @@ def main():
 def applyStrategy(config):
     pass
 
-def downloadPrev(config, useCached:bool = True):
+def downloadPrev(config, useCached:bool = False):
     global df
+    days = 3
+    min = Client.KLINE_INTERVAL_3MINUTE
+    fname = 'boll-tradef-df_'+str(days)+'d'+'-'+min+'.csv'
     if useCached:
-        df = pd.read_csv('boll-tradef-df.csv', index_col=0, parse_dates=True)         
+        df = pd.read_csv(fname, index_col=0, parse_dates=True)         
     else:
-        days = 24.0/24.0
+        
         yesterday = date.today() - timedelta(days)
         from_ts = time.mktime(yesterday.timetuple())
 
-        klines = binance.get_historical_klines(config['symbol'], Client.KLINE_INTERVAL_1MINUTE, str(from_ts))
+        klines = binance.get_historical_klines(config['symbol'], min, str(from_ts))
         klines2 = np.delete(klines, range(6,12), axis=1) #remove unnecessary column
         for i in range(0, len(klines2)):
             klines2[i][0] = utc_to_str(klines2[i][0], True) #utc to date string
@@ -66,15 +69,18 @@ def downloadPrev(config, useCached:bool = True):
                 .set_index('Date')
         df.index = pd.DatetimeIndex(df.index)
         df = df.astype({"Open":float, "High":float, "Low":float, "Close":float, "Volume":float})
-        df.to_csv('boll-tradef-df.csv')
+        df.to_csv(fname)
     
     
     print(df)
 
+def cmax(arg1, arg2, arg3):
+    return max(max(arg1, arg2), arg3)
+
+def cmin(arg1, arg2, arg3):
+    return min(min(arg1, arg2), arg3)    
+
 # <- signal
-#https://medium.datadriveninvestor.com/how-to-implement-bollinger-bands-in-python-1106b90da8d1
-#https://pythonforfinance.net/2017/07/31/bollinger-band-trading-strategy-backtest-in-python/
-#https://tradewithpython.com/generating-buy-sell-signals-using-python
 def initGraph(config):
     global df, figZoom, figPan
     global bol_upper, bol_lower
@@ -88,18 +94,84 @@ def initGraph(config):
     std20 = df["Close"].rolling(20).std()
     bol_upper = ma20 + 2*std20
     bol_lower = ma20 - 2*std20
-    buySignal  = df[df['Close'] <= bol_lower]['Close'].to_frame('buySignal')
-    sellSignal = df[df['Close'] >= bol_upper]['Close'].to_frame('sellSignal')
-    buySignal2  = pd.concat([df['Close'],buySignal], axis=1)['buySignal']
-    sellSignal2 = pd.concat([df['Close'],sellSignal], axis=1)['sellSignal']
+    #stratedgy
+    txFee = 0.036/100
+    tailRatio = 0.3
+
+    sellSignal2 = pd.DataFrame(index=df.index.copy(), columns=["sellSignal"])
+    buySignal2  = pd.DataFrame(index=df.index.copy(), columns=["buySignal"])    
+    gain_df     = pd.DataFrame(index=df.index.copy(), columns=["gain"])    
+
+    for i in range(19, len(df.index)):
+        date = df.index[i]
+        r = df.loc[date]
+        max = cmax(r['Open'], r['Close'], r['High'])
+        min = cmin(r['Open'], r['Close'], r['Low'])
+    
+        ma20v = ma20[i]
+
+        if min > ma20v and max > ma20v:
+            #inpect upper case            
+            bolv = bol_upper.loc[date]
+
+            tail = max - bolv
+            sellPrice = tail*(1-tailRatio) + bolv
+
+            tradeDecisionPrice = bolv*(1+txFee*2)
+            if sellPrice > tradeDecisionPrice:
+                for j in range(i, len(df.index)):
+                    date2 = df.index[j]
+                    bolv2 = bol_upper.loc[date2] #if bolv2 is lower than prev, use bolv1?
+
+                    r2 = df.loc[date2]
+                    min2 = cmin(r2['Open'], r2['Close'], r2['Low'])
+                    if bolv2 > min2:
+                        buyPrice = bolv2
+                        candlePassed = j-i
+                        if candlePassed > 0:
+                            print(f"candlePassed:{candlePassed}")
+                        break
+
+                fee = (sellPrice + buyPrice)*txFee
+                gainRatio = (sellPrice - buyPrice - fee)/sellPrice 
+                
+                sellSignal2.loc[date] = sellPrice
+                buySignal2.loc[date2] = buyPrice
+                gain_df.loc[date2]['gain'] = gainRatio
+                #sell 
+                #sellSignal2
+                #gain = sellPrice / bolv - txFee
+
+                '''
+                if gain < 0 and i+1 < len(df.index):
+                    idx2 = df.index[i+1]
+                    r2 = df.loc[idx2]
+                    min2 = min(r['Open'], r['Close'], r['Low'])
+                    
+                    #!issue <- min2를 잡는다는 보장이 없다... 바로 타고 올라갈 수도 있음.. 드물지만.. low candle 처리해줘야..? 예외케이스 따로 확인 필요
+                    #바로 빠지지 않으면 거기서 팔아 치워야됨..?
+                    buyPrice = bolv if min2 < bolv else min2 
+                '''
+        elif min < ma20v and max < ma20v:
+            #inpect lower case
+            #bolv = bol_lower.loc[idx]
+            pass
+    
+    sum = gain_df['gain'].sum()
+    print ("gain_df sum(%):", sum*100) 
+
+    #buySignal  = df[df['Close'] <= bol_lower]['Close'].to_frame('buySignal')
+    #sellSignal = df[df['Close'] >= bol_upper]['Close'].to_frame('sellSignal')
+    #buySignal2  = pd.concat([df['Close'],buySignal], axis=1)['buySignal']
+    #sellSignal2 = pd.concat([df['Close'],sellSignal], axis=1)['sellSignal']
     #construct addplot
     ma_df = pd.DataFrame(dict(Opma5=ma5,Opma10=ma10,Opma20=ma20,Opma40=ma40,Opma60=ma60,Opma120=ma120),index=df.index)
     boll_df = pd.DataFrame(dict(MA20=ma20, BollUpper=bol_upper,BollLower=bol_lower),index=df.index)
     ap = [
         #mpf.make_addplot(ma_df, type='line', width= 0.5, alpha = 1.0),
         mpf.make_addplot(boll_df, type='line', width= 0.5, alpha = 1.0),
-        mpf.make_addplot(buySignal2, type='scatter', marker='^', markersize=10, color='g'),
-        mpf.make_addplot(sellSignal2,type='scatter', marker='v', markersize=10, color='r'),
+        mpf.make_addplot(buySignal2, type='scatter', marker='^', markersize=25, color='g'),
+        mpf.make_addplot(sellSignal2,type='scatter', marker='v', markersize=25, color='r'),
     ]
     #candle coloring
     mc = mpf.make_marketcolors(
