@@ -56,13 +56,14 @@ key = None
 binance = getBinance(False)
 df = None
 
+backTesting = True
 ## Class to simulate getting more data from API:
 class RealTimeAPI():
     def __init__(self):
         self.data_pointer = 0
         #self.df = pd.read_csv('SP500_NOV2019_IDay.csv',index_col=0,parse_dates=True)
         #self.df = self.df.iloc[0:120,:]
-        days = 2.0/24.0
+        days = 1 if backTesting else 2.0/24.0
         min = config['interval'] + 'm'
         fname = 'boll-tradef-df_'+str(days)+'d'+'-'+min+'.csv'
         useCached = False
@@ -72,8 +73,11 @@ class RealTimeAPI():
             yesterday = (datetime.now() - timedelta(9.0/24.0)) - timedelta(days) #kst-9h
             #yesterday = date.today() - timedelta(days)
             from_ts = time.mktime(yesterday.timetuple())
-
+            #from_ts = 1640076128.0 #1
+            from_ts = 1640076245.0 #3
+            print(f'from_ts:{from_ts}') 
             klines = binance.get_historical_klines(config['symbol'], min, str(from_ts))
+            print(f'klines:{len(klines)}')
             klines2 = np.delete(klines, range(6,12), axis=1) #remove unnecessary column
             for i in range(0, len(klines2)):
                 klines2[i][0] = utc_to_str(klines2[i][0], True) #utc to date string
@@ -101,11 +105,12 @@ class RealTimeAPI():
         #self.data_pointer += int(0.2*self.df_len)
         #self.data_pointer += 20
         #self.data_pointer += 1
-        self.data_pointer += self.df_len
+        self.data_pointer += 75 if backTesting else self.df_len
         return self.df.iloc[r1:self.data_pointer,:]
 
+sellSignal2 = buySignal2 = None
 def init():
-    global df
+    global df, sellSignal2, buySignal2
     #data
     rtapi = RealTimeAPI()
     df = rtapi.initial_fetch()
@@ -115,13 +120,11 @@ def init():
     bol_upper = ma20 + 2*std20
     bol_lower = ma20 - 2*std20   
     boll_df = pd.DataFrame(dict(MA20=ma20, BollUpper=bol_upper,BollLower=bol_lower),index=df.index)
-    
+    sellSignal2 = pd.DataFrame(index=df.index.copy(), columns=["sellSignal"])
+    buySignal2  = pd.DataFrame(index=df.index.copy(), columns=["buySignal"])    
     #graph
-    ap = [
-        mpf.make_addplot(boll_df, type='line', width= 0.5, alpha = 1.0),
-        #mpf.make_addplot(buySignal2, type='scatter', marker='^', markersize=25, color='g'),
-        #mpf.make_addplot(sellSignal2,type='scatter', marker='v', markersize=25, color='r'),
-    ]
+    ap = [mpf.make_addplot(boll_df, type='line', width= 0.5, alpha = 1.0)]
+    
     fig, axes = mpf.plot(df,returnfig=True,figsize=(11,4),type='candle',title='\n\nBTCUSDT', addplot=ap)
     ax = axes[0]
 
@@ -138,21 +141,89 @@ def init():
 
     return rtapi, fig, ax, figZoom, figPan
 
-def update(nxt):
-    global ax, fig, df
+
+STR_NORMAL = 20
+STR_UPPER_NEXT = 21
+STR_LOWER_NEXT = 21
+strMode = STR_NORMAL
+sellPrice = buyPrice = None
+lastCompleted = None
+def update(nxt, dropLast):
+    global ax, fig, df, strMode, sellPrice, buyPrice, sellSignal2, buySignal2, lastCompleted
     if nxt is not None:
         df = df.append(nxt)
-
-    ma20 = df["Close"].rolling(20).mean().values     
+    #print(nxt)
+    ma20 = df["Close"].rolling(20).mean()     
     std20 = df["Close"].rolling(20).std()
     bol_upper = ma20 + 2*std20
     bol_lower = ma20 - 2*std20   
     boll_df = pd.DataFrame(dict(MA20=ma20, BollUpper=bol_upper,BollLower=bol_lower),index=df.index)
-    ap = [
-        mpf.make_addplot(boll_df, ax=ax, type='line', width= 0.5, alpha = 1.0),
-        #mpf.make_addplot(buySignal2, type='scatter', marker='^', markersize=25, color='g'),
-        #mpf.make_addplot(sellSignal2,type='scatter', marker='v', markersize=25, color='r'),
-    ]
+
+    txFee = 0.036/100
+    tailRatio = 0.3
+
+    r = nxt
+    date = nxt.name
+    max = cmax(r['Open'], r['Close'], r['High'])
+    min = cmin(r['Open'], r['Close'], r['Low'])
+    ma20v = ma20[date]
+
+    if date == lastCompleted:
+        print("this candle is completed")
+    elif strMode == STR_NORMAL:
+        if min > ma20v and max > ma20v: #short
+            #inpect upper case            
+            bolv = bol_upper.loc[date]
+            tail = max - bolv
+            sellPrice = tail*(1-tailRatio) + bolv
+
+            tradeDecisionPrice = bolv*(1+txFee*2)
+            if sellPrice > tradeDecisionPrice:
+                #_nxt = sellSignal2.iloc[-1].copy()
+                #_nxt.name = date
+                #_nxt['sellSignal'] = sellPrice
+                #_nxt = pd.DataFrame(index=[date], data=[sellPrice], columns=['sellSignal'])
+                #if dropLast: sellSignal2.drop(sellSignal2.tail(1).index,inplace=True)
+                #sellSignal2 = sellSignal2.append(_nxt)
+                sellSignal2.loc[date] = sellPrice
+                print(f'sellSignal:{[date, sellPrice]}')
+                strMode = STR_UPPER_NEXT
+        elif min < ma20v and max < ma20v: #long
+            pass
+    elif strMode == STR_UPPER_NEXT:
+        bolv2 = bol_upper.iloc[-1] #if bolv2 is lower than prev, use bolv1?
+
+        r2 = nxt
+        min2 = cmin(r2['Open'], r2['Close'], r2['Low'])
+        if bolv2 > min2:
+            buyPrice = bolv2
+            #candlePassed = j-i #length...
+
+            fee = (sellPrice + buyPrice)*txFee
+            gainAmount = sellPrice - buyPrice - fee
+            gainRatio = gainAmount/sellPrice 
+            
+            date2 = date
+            buySignal2.loc[date2] = buyPrice
+            #gain_df.loc[date2]['gain'] = gainRatio
+            
+            print(f'buySignal:{[date, buyPrice, gainAmount, gainRatio]}')
+            strMode = STR_NORMAL
+            lastCompleted = date2
+    elif strMode == STR_LOWER_NEXT:
+        pass
+
+    if len(buySignal2) < len(df): buySignal2 = buySignal2.append(pd.DataFrame(index=[date], data=[None], columns=['buySignal']))
+    if len(sellSignal2) < len(df): sellSignal2 = sellSignal2.append(pd.DataFrame(index=[date], data=[None], columns=['sellSignal']))
+
+    assert len(buySignal2) == len(df)                 
+    assert len(sellSignal2) == len(df)                 
+
+    ap = [mpf.make_addplot(boll_df, ax=ax, type='line', width= 0.5, alpha = 1.0)]
+    if buySignal2['buySignal'].sum() > 0:
+        ap.append(mpf.make_addplot(buySignal2, ax=ax, type='scatter', marker='^', markersize=25, color='g'))
+    if sellSignal2['sellSignal'].sum() > 0:
+        ap.append(mpf.make_addplot(sellSignal2, ax=ax,type='scatter', marker='v', markersize=25, color='r'))
     #print(f"len:{len(rtapi.df)}")
     #cur_xlim = ax.get_xlim()
     #cur_ylim = ax.get_ylim()
@@ -166,20 +237,7 @@ def update(nxt):
 
 rtapi, fig, ax, figZoom, figPan = init()
 
-'''
-import threading
- 
-def sum(rtapi):
-    for i in range(1,100):
-        time.sleep(0.25)
-        if key == 'q': break
-        print(f'draw:{i}')
-        nxt = rtapi.fetch_next()
-        update(nxt)
 
-t = threading.Thread(target=sum, args=(rtapi))
-t.start()
-'''
 
 
 TM_NONE = 10
@@ -190,16 +248,10 @@ cb_cnt = 0
 def cb_book(msg):
     global cb_cnt
     cb_cnt += 1
-    if cb_cnt%3 is not 0:
+    if cb_cnt%3 != 0:
         return
     
-    print(f'[book]{msg}')
-    #{'stream': 'btcusdt@depth5@100ms', 'data': {'lastUpdateId': 15792298707, 
-    # 'bids': [['49382.12000000', '0.26907000'], ['49379.65000000', '0.33396000'], ['49377.28000000', '0.04569000'], ['49377.18000000', '0.06400000'], ['49375.40000000', '0.00829000']], 
-    # 'asks': [['49384.37000000', '0.00700000'], ['49384.38000000', '0.01999000'], ['49385.41000000', '0.09458000'], ['49385.42000000', '0.04000000'], ['49386.28000000', '0.23000000']]
-    # }}
-    #msg['stream']
-    #msg['data']['lastUpdateId']
+    #print(f'[book]{msg}')
     date = datetime.now()
     ob = msg['data']
     bids = ob['bids']
@@ -218,14 +270,16 @@ def cb_book(msg):
     updatePrice(date, estPrice)
 
 def updatePrice(date, price):
-    print('updatePrice')
     global ax, fig
+    #print(f'updatePrice:[{date}:{price}]')
+
     #update graph
     lastRow = df.iloc[-1]
     lastDate = lastRow.name
 
     period = timedelta(minutes=int(config['interval']))
     nxt = lastRow.copy()
+    dropLast = False
     if (date-lastDate) > period:
         nxt.name = lastDate + period
         nxt['Open'] = nxt['High'] = nxt['Low'] = nxt['Close'] = price
@@ -234,27 +288,49 @@ def updatePrice(date, price):
         if price > nxt['High']: nxt['High'] = price
         if price < nxt['Low']: nxt['Low'] = price
         df.drop(df.tail(1).index,inplace=True)
+        dropLast = True
         #nxt = None
     
-    update(nxt)
+    update(nxt, dropLast)
     #trade decision
 
     #### run!
     pass
 
+import threading
+ 
+def work():
+    global rtapi
+    while True:
+        nxt = rtapi.fetch_next().iloc[0]
+        if nxt is None:
+            break
+        date = nxt.name
+        delta = timedelta(seconds=60*int(config['interval'])/5)
+        updatePrice(date + delta*1, nxt['Open'])
+        updatePrice(date + delta*2, nxt['High'])
+        updatePrice(date + delta*3, nxt['Low'])
+        updatePrice(date + delta*4, nxt['Close'])
 
 def launchStream(config):
-    twm = getBinanceSocket()
-    twm.start()
-    #twm.start_kline_socket(callback=cb_kline, symbol=config['symbol'], interval=KLINE_INTERVAL_3MINUTE)
-    #twm.start_multiplex_socket(callback=cb_book, streams=['btcusdt@bookTicker'])
-    twm.start_multiplex_socket(callback=cb_book, streams=['btcusdt@depth5@100ms'])
-    #twm.start_depth_socket(callback=cb_depth, symbol=symbol)
-    print('show')
-    mpf.show()
-    print('join')
-    twm.join()
-    
+    if backTesting:
+        t = threading.Thread(target=work, args=())
+        t.start()
+
+        mpf.show()
+        t.join()
+        pass
+    else:
+        twm = getBinanceSocket()
+        twm.start()
+        #twm.start_kline_socket(callback=cb_kline, symbol=config['symbol'], interval=KLINE_INTERVAL_3MINUTE)
+        #twm.start_multiplex_socket(callback=cb_book, streams=['btcusdt@bookTicker'])
+        twm.start_multiplex_socket(callback=cb_book, streams=['btcusdt@depth5@100ms'])
+        #twm.start_depth_socket(callback=cb_depth, symbol=symbol)
+
+        mpf.show()
+        twm.join()
+
 launchStream(config)
 
 #mpf.show() #inside launchStream
