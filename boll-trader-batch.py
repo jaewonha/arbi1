@@ -28,7 +28,7 @@ def getBinance(testnet:bool):
         sec_key = keyJson['binance']['secKey']
     return Client(api_key, sec_key)
 
-binance = getBinance(True)
+binance = getBinance(False)
 
 config = {
     "asset":"BTC",
@@ -50,9 +50,9 @@ def main():
 def applyStrategy(config):
     pass
 
-def downloadPrev(config, useCached:bool = True):
+def downloadPrev(config, useCached:bool = False):
     global df
-    days = 3
+    days = 1
     min = Client.KLINE_INTERVAL_3MINUTE
     fname = 'boll-tradef-df_'+str(days)+'d'+'-'+min+'.csv'
     if useCached:

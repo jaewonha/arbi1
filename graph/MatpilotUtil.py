@@ -20,10 +20,10 @@ class ZoomPan:
             xdata = event.xdata # get event x location
             ydata = event.ydata # get event y location
 
-            if event.button == 'down':
+            if event.button == 'up':
                 # deal with zoom in
                 scale_factor = 1 / base_scale
-            elif event.button == 'up':
+            elif event.button == 'down':
                 # deal with zoom out
                 scale_factor = base_scale
             else:
