@@ -19,6 +19,8 @@ from util.math import *
 import mplfinance as mpf
 from graph.MatpilotUtil import ZoomPan
 
+from classes import *
+from arbi import *
 
 #common
 def getBianceKey(testnet:bool):
@@ -52,9 +54,11 @@ config['symbol'] = config['asset'] + "USDT"
 P = 0
 Q = 1
 key = None
-
-binance = getBinance(False)
 df = None
+
+ex = Exchanges()
+asset = 'BTC'
+TEST = True            
 
 backTesting = True
 ## Class to simulate getting more data from API:
@@ -76,7 +80,7 @@ class RealTimeAPI():
             #from_ts = 1640076128.0 #1
             from_ts = 1640076245.0 #3
             print(f'from_ts:{from_ts}') 
-            klines = binance.get_historical_klines(config['symbol'], min, str(from_ts))
+            klines = ex.binance.get_historical_klines(config['symbol'], min, str(from_ts))
             print(f'klines:{len(klines)}')
             klines2 = np.delete(klines, range(6,12), axis=1) #remove unnecessary column
             for i in range(0, len(klines2)):
@@ -173,7 +177,7 @@ def update(nxt, dropLast):
     ma20v = ma20[date]
 
     #ts13 = current_milli_time()
-
+    bn_order = None
     if date == lastCompleted:
         print("this candle is completed")
     elif strMode == STR_NORMAL:
@@ -194,6 +198,8 @@ def update(nxt, dropLast):
                 sellSignal2.loc[date] = sellPrice
                 print(f'sellSignal:{[date, sellPrice]}')
                 ##trade short
+                bn_order = bn_fut_trade(ex, asset, TRADE_SELL, floor_2(sellPrice), 1.0, TEST)
+
                 strMode = STR_UPPER_NEXT
         elif min < ma20v and max < ma20v: #long
             pass
@@ -216,6 +222,8 @@ def update(nxt, dropLast):
             
             print(f'buySignal:{[date, buyPrice, gainAmount, gainRatio]}')
             ##trade buy
+            bn_order = bn_fut_trade(ex, asset, TRADE_BUY, floor_2(buyPrice), 1.0, TEST)
+
             strMode = STR_NORMAL
             lastCompleted = date2
     elif strMode == STR_LOWER_NEXT:
@@ -260,6 +268,8 @@ def update(nxt, dropLast):
     #print(f'\t[{ts13-ts12}]ms')
     #print(f'\t[{ts20-ts19}]ms')
     
+    if bn_order: bn_wait_order(ex, bn_order, BN_FUT, TEST)
+    #if failed -> prevent next order..? total amount management?
         
 
 rtapi, fig, ax, figZoom, figPan = init()
