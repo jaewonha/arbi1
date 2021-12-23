@@ -141,6 +141,8 @@ def init():
 
     return rtapi, fig, ax, figZoom, figPan
 
+def current_milli_time():
+    return round(time.time() * 1000)
 
 STR_NORMAL = 20
 STR_UPPER_NEXT = 21
@@ -150,15 +152,17 @@ sellPrice = buyPrice = None
 lastCompleted = None
 def update(nxt, dropLast):
     global ax, fig, df, strMode, sellPrice, buyPrice, sellSignal2, buySignal2, lastCompleted
+    #ts10 = current_milli_time()
     if nxt is not None:
         df = df.append(nxt)
     #print(nxt)
     ma20 = df["Close"].rolling(20).mean()     
     std20 = df["Close"].rolling(20).std()
+    #ts11 = current_milli_time()
     bol_upper = ma20 + 2*std20
     bol_lower = ma20 - 2*std20   
     boll_df = pd.DataFrame(dict(MA20=ma20, BollUpper=bol_upper,BollLower=bol_lower),index=df.index)
-
+    #ts12 = current_milli_time()
     txFee = 0.036/100
     tailRatio = 0.3
 
@@ -167,6 +171,8 @@ def update(nxt, dropLast):
     max = cmax(r['Open'], r['Close'], r['High'])
     min = cmin(r['Open'], r['Close'], r['Low'])
     ma20v = ma20[date]
+
+    #ts13 = current_milli_time()
 
     if date == lastCompleted:
         print("this candle is completed")
@@ -187,6 +193,7 @@ def update(nxt, dropLast):
                 #sellSignal2 = sellSignal2.append(_nxt)
                 sellSignal2.loc[date] = sellPrice
                 print(f'sellSignal:{[date, sellPrice]}')
+                ##trade short
                 strMode = STR_UPPER_NEXT
         elif min < ma20v and max < ma20v: #long
             pass
@@ -208,6 +215,7 @@ def update(nxt, dropLast):
             #gain_df.loc[date2]['gain'] = gainRatio
             
             print(f'buySignal:{[date, buyPrice, gainAmount, gainRatio]}')
+            ##trade buy
             strMode = STR_NORMAL
             lastCompleted = date2
     elif strMode == STR_LOWER_NEXT:
@@ -218,6 +226,8 @@ def update(nxt, dropLast):
 
     assert len(buySignal2) == len(df)                 
     assert len(sellSignal2) == len(df)                 
+
+    #ts19 = current_milli_time() #long part - graph pipeline
 
     ap = [mpf.make_addplot(boll_df, ax=ax, type='line', width= 0.5, alpha = 1.0)]
     if buySignal2['buySignal'].sum() > 0:
@@ -234,6 +244,23 @@ def update(nxt, dropLast):
 
     fig.canvas.draw()
     #fig.canvas.flush_events()
+    if len(df) > 25:
+        df = df.iloc[-25:len(df)]
+        boll_df = boll_df.iloc[-25:len(df)]
+    if len(buySignal2) > 25:
+        buySignal2 = buySignal2.iloc[-25:len(buySignal2)]
+    if len(sellSignal2) > 25:
+        sellSignal2 = sellSignal2.iloc[-25:len(sellSignal2)]
+    
+    #ts20 = current_milli_time()
+
+    #print(f'update[{ts20-ts10}]ms')
+    #print(f'\t[{ts11-ts10}]ms')
+    #print(f'\t[{ts12-ts11}]ms')
+    #print(f'\t[{ts13-ts12}]ms')
+    #print(f'\t[{ts20-ts19}]ms')
+    
+        
 
 rtapi, fig, ax, figZoom, figPan = init()
 
