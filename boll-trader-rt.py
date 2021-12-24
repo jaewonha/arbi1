@@ -79,9 +79,11 @@ narrowWindow = False
 useObDump = False
 obDumpPath = './bn-dump/bn-ob-20211223_002151-copy.txt'
 obDumpFp = None
-prevLen = 21
-rtLen = 25
+prevLen = 25
+rtLen = 30
 forceDraw = True
+saveFig = False
+
 ## Class to simulate getting more data from API:
 class BTDataFeeder(): #BackTestingDataFeeder
     def __init__(self):
@@ -98,28 +100,32 @@ class BTDataFeeder(): #BackTestingDataFeeder
         else:
             if backTesting and backTestingSrc == 'ob-dump':
                 obDumpFp = open(obDumpPath, 'r')
-                min1 = int(10/3.0*60)         
-                readCnt = 1000 + min1*60*3
-                for i in range(1, readCnt):
+                _min = int(10/3.0*60)   
+                _hour = _min*60      
+                readCnt = 1  #23:24
+                readCnt = 1 + _hour*(24+2) + _min*6 #01:24
+                for i in range(0, readCnt):
                     ob = json.loads(obDumpFp.readline())
                 ts = ob['date']
                 dateTimeobj = datetime.fromtimestamp(float(ts))
-                fromTimeObj = dateTimeobj - timedelta(hours=9) - timedelta(minutes=3*20)
-                from_ts = time.mktime(fromTimeObj.timetuple())
+                fromTimeObj = dateTimeobj - timedelta(hours=9)
+                end_ts = time.mktime( fromTimeObj.timetuple() )
+                from_ts = time.mktime( (fromTimeObj - timedelta(minutes=3*20)).timetuple() )
             else:
                 yesterday = (datetime.now() - timedelta(9.0/24.0)) - timedelta(days) #kst-9h
                 #yesterday = date.today() - timedelta(days)
                 from_ts = time.mktime(yesterday.timetuple())
                 #from_ts = 1640076128.0 #1
                 from_ts = 1640076245.0 #3
+                end_ts = None
             print(f'from_ts:{from_ts}') 
-            klines = ex.binance.get_historical_klines(config['symbol'], min, str(from_ts))
+            klines = ex.binance.get_historical_klines(config['symbol'], min, str(from_ts), str(end_ts))
+            klines = np.delete(klines, range(6,12), axis=1) #remove unnecessary column
             print(f'klines:{len(klines)}')
-            klines2 = np.delete(klines, range(6,12), axis=1) #remove unnecessary column
-            for i in range(0, len(klines2)):
-                klines2[i][0] = utc_to_str(klines2[i][0], True) #utc to date string
+            for i in range(0, len(klines)):
+                klines[i][0] = utc_to_str(klines[i][0], True) #utc to date string
                 
-            df = pd.DataFrame(klines2, columns=['ts','open','high','low','close','volume']) \
+            df = pd.DataFrame(klines, columns=['ts','open','high','low','close','volume']) \
                     .rename(columns = {'ts': 'Date', 'open': 'Open', 'high': 'High', 'low': 'Low', 'close': 'Close', 'volume':'Volume'}) \
                     .set_index('Date')
             df.index = pd.DatetimeIndex(df.index)
@@ -232,10 +238,12 @@ def update(nxt):
             #inpect upper case            
             bolv = bol_upper.loc[date]
             tail = max - bolv
-            sellPrice = tail*(1-tailRatio) + bolv
+            tailSellMarkPrice = tail*(1-tailRatio) + bolv
 
-            tradeDecisionPrice = bolv*(1+txFee*2)
-            if sellPrice > tradeDecisionPrice:
+            noLossMarginPrice = bolv*(1+txFee*2)
+            p = nxt['Close']
+            if tailSellMarkPrice > p and p > noLossMarginPrice:
+                sellPrice = p
                 #_nxt = sellSignal.iloc[-1].copy()
                 #_nxt.name = date
                 #_nxt['sellSignal'] = sellPrice
@@ -243,7 +251,7 @@ def update(nxt):
                 #if dropLast: sellSignal.drop(sellSignal.tail(1).index,inplace=True)
                 #sellSignal = sellSignal.append(_nxt)
                 sellSignal.loc[date] = sellPrice
-                print(f'sellSignal:{[date, sellPrice]}')
+                print(f"sellSignal:{[date, sellPrice]}")
                 ##trade short
                 bn_order = bn_fut_trade(ex, asset, TRADE_SELL, floor_2(sellPrice), q, TEST)
                 #tradeCompleted = True
@@ -254,7 +262,8 @@ def update(nxt):
         bolv2 = bol_upper.iloc[-1] #if bolv2 is lower than prev, use bolv1?
 
         r2 = nxt
-        min2 = cmin(r2['Open'], r2['Close'], r2['Low'])
+        #min2 = cmin(r2['Open'], r2['Close'], r2['Low'])
+        min2 = r2['Close']
         if bolv2 > min2:
             buyPrice = bolv2
             #candlePassed = j-i #length...
@@ -291,24 +300,23 @@ def update(nxt):
         print(f"[stat]({cb_cnt})gainSum:{floor_4(gainSum*100)}%, period:{period}, avg:{floor_4(gainSum/period.days*100) if period.days > 0.0 else gainSum}%")
     #ts19 = current_milli_time() #long part - graph pipeline
     if not backTesting or tradeCompleted or forceDraw: #or (backTestingSrc == 'ob-dump' and updateCnt%(2)==0):
-        '''
         boll_df = pd.DataFrame(dict(MA20=ma20, BollUpper=bol_upper, BollLower=bol_lower), index=df.index)
         ap = [mpf.make_addplot(boll_df, ax=ax, type='line', width= 0.5, alpha = 1.0)]
         if buySignal['buySignal'].sum() > 0:
             ap.append(mpf.make_addplot(buySignal, ax=ax, type='scatter', marker='^', markersize=25, color='g'))
         if sellSignal['sellSignal'].sum() > 0:
             ap.append(mpf.make_addplot(sellSignal, ax=ax,type='scatter', marker='v', markersize=25, color='r'))
-        '''
+        
         #print(f"len:{len(btData.df)}")
         #cur_xlim = ax.get_xlim()
         #cur_ylim = ax.get_ylim()
         ax.clear()
         #ax.set_xlim(cur_xlim)
         #ax.set_ylim(cur_ylim)
-        mpf.plot(df, ax=ax, type='candle')#, addplot=ap)
+        mpf.plot(df, ax=ax, type='candle', addplot=ap)
 
         fig.canvas.draw()
-        fig.savefig('./fig/bn-ob-20211223_002151-'+str(readCnt)+'.png', dpi=300)
+        if saveFig: fig.savefig('./fig/bn-ob-20211223_002151-'+str(readCnt)+'.png', dpi=300)
         #fig.canvas.flush_events()
 
     if narrowWindow:
