@@ -140,3 +140,4 @@ cython_debug/
 .key.ini
 bn-dump/
 *.csv
+fig/

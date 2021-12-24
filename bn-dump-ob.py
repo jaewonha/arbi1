@@ -77,7 +77,7 @@ def launchStream():
 
 #main
 dateStr = datetime.today().strftime("%Y%m%d_%H%M%S")
-log_open('./bn-dump/bn-ob-'+dateStr+'txt')
+log_open('./bn-dump/bn-ob-'+dateStr+'.txt')
 
 def signal_handler(sig, frame):
     global twm
