@@ -89,39 +89,43 @@ class RealTimeAPI():
 
 rtapi = RealTimeAPI()
 
-resample_map ={'Open' :'first',
-            'High' :'max'  ,
-            'Low'  :'min'  ,
-            'Close':'last' }
-resample_period = '15T'
-
 df = rtapi.initial_fetch()
-rs = df.resample(resample_period).agg(resample_map).dropna()
+ma20 = df["Close"].rolling(20).mean()
+std20 = df["Close"].rolling(20).std()
+bol_upper = ma20 + 2*std20
+bol_lower = ma20 - 2*std20
+boll_df = pd.DataFrame(dict(MA20=ma20, BollUpper=bol_upper,BollLower=bol_lower),index=df.index)
 
-fig, axes = mpf.plot(rs,returnfig=True,figsize=(11,8),type='candle',title='\n\nGrowing Candle')
+fig, axes = mpf.plot(df,returnfig=True,figsize=(11,8),type='candle',title='\n\nBTCUSDT')
 ax = axes[0]
 
 def animate(ival):
-    global df
-    global rs
+    global df, boll_df
     nxt = rtapi.fetch_next()
     if nxt is None:
         print('no more data to plot')
-        ani.event_source.interval *= 3
-        if ani.event_source.interval > 12000:
-            exit()
         return
     df = df.append(nxt)
-    #rs = df.resample(resample_period).agg(resample_map).dropna()
-    rs = df
+    df_last20 = df["Close"][-20:]
+    ma20 = df_last20.rolling(20).mean()
+    std20 = df_last20.rolling(20).std()
+    ma20.dropna(inplace=True)
+    std20.dropna(inplace=True)
+    bol_upper = ma20 + 2*std20
+    bol_lower = ma20 - 2*std20
+    boll_nxt = pd.concat([ma20, bol_upper, bol_lower], axis=1)
+    boll_nxt.columns = ['MA20', 'BollUpper', 'BollLower']
+    boll_df = boll_df.append(boll_nxt)
+    
     cur_xlim = ax.get_xlim()
     cur_ylim = ax.get_ylim()
     ax.clear()
     ax.set_xlim(cur_xlim)
     ax.set_ylim(cur_ylim)
-    mpf.plot(rs,ax=ax,type='candle')
+    ap = mpf.make_addplot(boll_df, ax=ax, type='line', width= 0.5, alpha = 1.0)
+    mpf.plot(df,ax=ax,type='candle',addplot=ap)
 
-#ani = animation.FuncAnimation(fig, animate, interval=250)
+    #ani = animation.FuncAnimation(fig, animate, interval=250)
 
 zp = ZoomPan()
 figZoom = zp.zoom_factory(ax, base_scale = 1.5)
@@ -139,7 +143,7 @@ import threading
  
 def sum(low, high):
     for i in range(1,100):
-        time.sleep(0.25)
+        time.sleep(0)
         if key == 'q': break
         print(f'draw:{i}')
         animate(0)

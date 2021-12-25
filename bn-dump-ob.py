@@ -48,6 +48,7 @@ def getBinanceSocket(testnet:bool = False):
 key = None
 cb_cnt = 0
 def cb_book(msg):
+    print('cb_book')
     global cb_cnt
     cb_cnt += 1
     if cb_cnt%3 != 0:
@@ -63,6 +64,26 @@ def cb_book(msg):
 
     log(json.dumps(msg))
 
+def cb_trade(msg):
+    print('cb_trade')
+    '''
+    {
+    "e": "aggTrade",  // Event type
+    "E": 123456789,   // Event time
+    "s": "BNBBTC",    // Symbol
+    "a": 12345,       // Aggregate trade ID
+    "p": "0.001",     // Price
+    "q": "100",       // Quantity
+    "f": 100,         // First trade ID
+    "l": 105,         // Last trade ID
+    "T": 123456785,   // Trade time
+    "m": true,        // Is the buyer the market maker?
+    "M": true         // Ignore
+    }
+    '''
+    data = msg['data']
+    print(json.dumps(data), file=fpTrade)
+
 twm = None
 def launchStream():
     global twm
@@ -71,6 +92,7 @@ def launchStream():
     #twm.start_kline_socket(callback=cb_kline, symbol=config['symbol'], interval=KLINE_INTERVAL_3MINUTE)
     #twm.start_multiplex_socket(callback=cb_book, streams=['btcusdt@bookTicker'])
     twm.start_multiplex_socket(callback=cb_book, streams=['btcusdt@depth5@100ms'])
+    twm.start_multiplex_socket(callback=cb_trade, streams=['btcusdt@aggTrade'])
     #twm.start_depth_socket(callback=cb_depth, symbol=symbol)
     while True:
         input('Ctrl+C to flush and end')
@@ -78,7 +100,7 @@ def launchStream():
 #main
 dateStr = datetime.today().strftime("%Y%m%d_%H%M%S")
 log_open('./bn-dump/bn-ob-'+dateStr+'.txt')
-
+fpTrade = open('./bn-dump/bn-trade-'+dateStr+'.txt', 'w')
 def signal_handler(sig, frame):
     global twm
     print('You pressed Ctrl+C!')
@@ -87,6 +109,7 @@ def signal_handler(sig, frame):
     twm.join()
     print('>> log close')
     log_close()
+    fpTrade.close()
     print('>> end')
     sys.exit(0)
 
