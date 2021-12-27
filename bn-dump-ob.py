@@ -48,7 +48,6 @@ def getBinanceSocket(testnet:bool = False):
 key = None
 cb_cnt = 0
 def cb_book(msg):
-    print('cb_book')
     global cb_cnt
     cb_cnt += 1
     if cb_cnt%3 != 0:
@@ -65,7 +64,6 @@ def cb_book(msg):
     log(json.dumps(msg))
 
 def cb_trade(msg):
-    print('cb_trade')
     '''
     {
     "e": "aggTrade",  // Event type

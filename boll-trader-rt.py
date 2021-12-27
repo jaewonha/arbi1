@@ -56,7 +56,7 @@ def getBinanceSocket(testnet:bool = False):
 
 config = {
     "asset":"BTC",
-    "interval":"3", #min
+    "interval":"1", #min
     "prev": 20
 }
 config['symbol'] = config['asset'] + "USDT"
@@ -75,19 +75,19 @@ backTesting = True
 #backTestingSrc = 'candle-fetch'
 backTestingSrc = 'ob-dump'
 useCached = False
-narrowWindow = False
+narrowWindow = True
 useObDump = False
-obDumpPath = './bn-dump/bn-ob-20211223_002151-copy.txt'
+obDumpPath = './bn-dump/bn-ob-20211223_002151.txt'
 obDumpFp = None
 prevLen = 25
 rtLen = 30
-forceDraw = True
-saveFig = False
+forceDraw = False
+saveFig = True
 
 ## Class to simulate getting more data from API:
 class BTDataFeeder(): #BackTestingDataFeeder
     def __init__(self):
-        global obDumpFp
+        global obDumpFp, readCnt
         self.data_pointer = 0
         #self.df = pd.read_csv('SP500_NOV2019_IDay.csv',index_col=0,parse_dates=True)
         #self.df = self.df.iloc[0:120,:]
@@ -103,7 +103,8 @@ class BTDataFeeder(): #BackTestingDataFeeder
                 _min = int(10/3.0*60)   
                 _hour = _min*60      
                 readCnt = 1  #23:24
-                readCnt = 1 + _hour*(24+2) + _min*6 #01:24
+                #readCnt = 1 + _hour*(24+2) + _min*(6) #01:24
+                #readCnt = 1 + _hour*(7+24) - _min*(6) + _min*(3*2)##06:18
                 for i in range(0, readCnt):
                     ob = json.loads(obDumpFp.readline())
                 ts = ob['date']
@@ -194,6 +195,7 @@ STR_LOWER_NEXT = 21
 strMode = STR_NORMAL
 sellPrice = buyPrice = None
 lastCompleted = None
+isLoss = False
 
 TS_UPPER = 1
 TS_LOWER = -1
@@ -203,7 +205,7 @@ tradeStart = None
 tradeEnd = None
 def update(nxt):
     global ax, fig, df, strMode, sellPrice, buyPrice, sellSignal, buySignal, lastCompleted, readCnt
-    global tradeStart, tradeEnd, gainSum
+    global tradeStart, tradeEnd, gainSum, isLoss
     #ts10 = current_milli_time()
     if nxt is None:
         print('nxt is none')
@@ -211,7 +213,7 @@ def update(nxt):
 
     df = df.append(nxt)
 
-    if readCnt%100 == 0: print(f"readCnt:{readCnt}")
+    if readCnt%5000 == 0: print(f"readCnt:{readCnt}")
     #print(nxt)
     ma20 = df["Close"].rolling(20).mean()     
     std20 = df["Close"].rolling(20).std()
@@ -224,13 +226,17 @@ def update(nxt):
 
     date = nxt.name    
     ma20v = ma20[date]
-    q = 0.0005
+    #q = 0.0005
+    q = 10000/50000.0
     #ts13 = current_milli_time()
     bn_order = None
     tradeCompleted = False
     if date == lastCompleted:
         pass
         #print("this candle is completed")
+    elif isLoss and date < lastCompleted + timedelta(minutes=int(config['interval']))*2.1:
+        #print(f"skip loss + 2 interval:{(date-lastCompleted).seconds}sec")
+        pass
     elif strMode == STR_NORMAL:
         max = cmax(nxt['Open'], nxt['Close'], nxt['High'])
         min = cmin(nxt['Open'], nxt['Close'], nxt['Low'])
@@ -264,11 +270,14 @@ def update(nxt):
         r2 = nxt
         #min2 = cmin(r2['Open'], r2['Close'], r2['Low'])
         min2 = r2['Close']
-        if bolv2 > min2:
-            buyPrice = bolv2
-            #candlePassed = j-i #length...
 
-            fee = (sellPrice + buyPrice)*txFee
+        _buyPrice = min2
+        fee = (sellPrice + _buyPrice)*txFee*q
+        isLoss = sellPrice < bolv2 + fee
+        if bolv2 > min2 or isLoss:
+            
+            #candlePassed = j-i #length...
+            buyPrice = _buyPrice
             gainAmount = sellPrice - buyPrice - fee
             gainRatio = gainAmount/sellPrice 
             
@@ -279,7 +288,7 @@ def update(nxt):
             print(f'buySignal:{[date, buyPrice, gainAmount, gainRatio]}')
             ##trade buy
             bn_order = bn_fut_trade(ex, asset, TRADE_BUY, floor_2(buyPrice), q, TEST)
-            print(f"[result]sell:{sellPrice}, buy:{buyPrice}, gain:{floor_4(gainRatio*100)}%")
+            print(f"[result]sell:{sellPrice}, buy:{buyPrice}, gain:{floor_4(gainRatio*100)}%, isLoss:{isLoss}")
             tradeCompleted = True
             gainSum += gainRatio
             strMode = STR_NORMAL
@@ -423,6 +432,7 @@ def BTThread():
             ob = json.loads(line)
             cb_book(ob)
             readCnt += 1
+        print(f'stream end:{readCnt}')
 
 def launchStream():
     if backTesting:
