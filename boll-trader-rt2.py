@@ -238,8 +238,9 @@ def update(nxt):
         #print(f"skip loss + 2 interval:{(date-lastCompleted).seconds}sec")
         pass
     elif strMode == STR_NORMAL:
-        max = cmax(nxt['Open'], nxt['Close'], nxt['High'])
-        min = cmin(nxt['Open'], nxt['Close'], nxt['Low'])
+        p = nxt['Close']
+        max = cmax(nxt['Open'], p, nxt['High'])
+        min = cmin(nxt['Open'], p, nxt['Low'])
         if min > ma20v and max > ma20v: #short
             #inpect upper case            
             bolv = bol_upper.loc[date]
@@ -247,7 +248,6 @@ def update(nxt):
             tailSellMarkPrice = tail*(1-tailRatio) + bolv
 
             noLossMarginPrice = bolv*(1+txFee*2)
-            p = nxt['Close']
             if tailSellMarkPrice > p and p > noLossMarginPrice:
                 sellPrice = p
                 #_nxt = sellSignal.iloc[-1].copy()

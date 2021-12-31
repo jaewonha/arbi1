@@ -99,58 +99,66 @@ def initGraph(config):
     for i in range(19, len(df.index)):
         date = df.index[i]
         r = df.loc[date]
-        max = cmax(r['Open'], r['Close'], r['High'])
-        min = cmin(r['Open'], r['Close'], r['Low'])
-    
+        
         ma20v = ma20[i]
 
-        if min > ma20v and max > ma20v:
-            #inpect upper case            
-            bolv = bol_upper.loc[date]
-
-            tail = max - bolv
-            sellPrice = tail*(1-tailRatio) + bolv
-
-            tradeDecisionPrice = bolv*(1+txFee*2)
-            if sellPrice > tradeDecisionPrice:
-                for j in range(i, len(df.index)):
-                    date2 = df.index[j]
-                    bolv2 = bol_upper.loc[date2] #if bolv2 is lower than prev, use bolv1?
-
-                    r2 = df.loc[date2]
-                    min2 = cmin(r2['Open'], r2['Close'], r2['Low'])
-                    if bolv2 > min2:
-                        buyPrice = bolv2
-                        candlePassed = j-i
-                        if candlePassed > 0:
-                            print(f"candlePassed:{candlePassed}")
-                        break
-
-                fee = (sellPrice + buyPrice)*txFee
-                gainRatio = (sellPrice - buyPrice - fee)/sellPrice 
-                
-                sellSignal2.loc[date] = sellPrice
-                buySignal2.loc[date2] = buyPrice
-                gain_df.loc[date2]['gain'] = gainRatio
-                #sell 
-                #sellSignal2
-                #gain = sellPrice / bolv - txFee
-
-                '''
-                if gain < 0 and i+1 < len(df.index):
-                    idx2 = df.index[i+1]
-                    r2 = df.loc[idx2]
-                    min2 = min(r['Open'], r['Close'], r['Low'])
-                    
-                    #!issue <- min2를 잡는다는 보장이 없다... 바로 타고 올라갈 수도 있음.. 드물지만.. low candle 처리해줘야..? 예외케이스 따로 확인 필요
-                    #바로 빠지지 않으면 거기서 팔아 치워야됨..?
-                    buyPrice = bolv if min2 < bolv else min2 
-                '''
-        elif min < ma20v and max < ma20v:
-            #inpect lower case
-            #bolv = bol_lower.loc[idx]
+        stretegy = 20
+        if stretegy == 20:
+            #bol upper or lower-> sell at ma20.
+            
             pass
-        
+        elif stretegy == 10:
+            max = cmax(r['Open'], r['Close'], r['High'])
+            min = cmin(r['Open'], r['Close'], r['Low'])
+    
+            if min > ma20v and max > ma20v:
+                #inpect upper case            
+                bolv = bol_upper.loc[date]
+
+                tail = max - bolv
+                sellPrice = tail*(1-tailRatio) + bolv
+
+                tradeDecisionPrice = bolv*(1+txFee*2)
+                if sellPrice > tradeDecisionPrice:
+                    for j in range(i, len(df.index)):
+                        date2 = df.index[j]
+                        bolv2 = bol_upper.loc[date2] #if bolv2 is lower than prev, use bolv1?
+
+                        r2 = df.loc[date2]
+                        min2 = cmin(r2['Open'], r2['Close'], r2['Low'])
+                        if bolv2 > min2:
+                            buyPrice = bolv2
+                            candlePassed = j-i
+                            if candlePassed > 0:
+                                print(f"candlePassed:{candlePassed}")
+                            break
+
+                    fee = (sellPrice + buyPrice)*txFee
+                    gainRatio = (sellPrice - buyPrice - fee)/sellPrice 
+                    
+                    sellSignal2.loc[date] = sellPrice
+                    buySignal2.loc[date2] = buyPrice
+                    gain_df.loc[date2]['gain'] = gainRatio
+                    #sell 
+                    #sellSignal2
+                    #gain = sellPrice / bolv - txFee
+
+                    
+                    #if gain < 0 and i+1 < len(df.index):
+                        #idx2 = df.index[i+1]
+                        #r2 = df.loc[idx2]
+                        #min2 = min(r['Open'], r['Close'], r['Low'])
+                        
+                        ##!issue <- min2를 잡는다는 보장이 없다... 바로 타고 올라갈 수도 있음.. 드물지만.. low candle 처리해줘야..? 예외케이스 따로 확인 필요
+                        ##바로 빠지지 않으면 거기서 팔아 치워야됨..?
+                        #buyPrice = bolv if min2 < bolv else min2 
+                    
+            elif min < ma20v and max < ma20v:
+                #inpect lower case
+                #bolv = bol_lower.loc[idx]
+                pass
+        #end if stratedy
+
     gain_df['gain'] = gain_df['gain'].fillna(0)
     sum = gain_df['gain'].sum()
     print ("gain_df sum(%):", sum*100) 
@@ -199,72 +207,6 @@ def initGraph(config):
     mpf.show()
 
 
-def launchStream(config):
-    twm = ThreadedWebsocketManager(api_key=api_key, api_secret=sec_key)
-    twm.start()
-    twm.start_kline_socket(callback=cb_kline, symbol=config['symbol'], interval=KLINE_INTERVAL_3MINUTE)
-    #twm.start_multiplex_socket(callback=cb_book, streams=['btcusdt@bookTicker'])
-    twm.start_multiplex_socket(callback=cb_book, streams=['btcusdt@depth5@100ms'])
-    #twm.start_depth_socket(callback=cb_depth, symbol=symbol)
-    twm.join()
-
-
-## callbacks
-
-def cb_kline(msg):
-    global df, ax
-    print(f'[kline]{msg}')
-
-    #draw
-    '''
-    ##msg -> df update
-    nxt = rtapi.fetch_next()
-    df = df.append(nxt)
-    cur_xlim = ax.get_xlim()
-    cur_ylim = ax.get_ylim()
-    ax.clear()
-    ax.set_xlim(cur_xlim)
-    ax.set_ylim(cur_ylim)
-    mpf.plot(df,ax=ax,type='candle')
-    #check buy condition
-    '''
-    #update graph
-
-
-#def cb_depth(msg):
-    #print(f'[depth]{msg}')
-    #check buy condition
-    #update graph
-
-def cb_book(msg):
-    print(f'[book]{msg}')
-
-
 if __name__ == "__main__":
     main()
 
-'''
-import asyncio
-
-from binance import AsyncClient, DepthCacheManager
-
-
-async def main():
-    client = await AsyncClient.create()
-    dcm = DepthCacheManager(client, 'BNBBTC')
-
-    async with dcm as dcm_socket:
-        while True:
-            depth_cache = await dcm_socket.recv()
-            print("symbol {}".format(depth_cache.symbol))
-            print("top 5 bids")
-            print(depth_cache.get_bids()[:5])
-            print("top 5 asks")
-            print(depth_cache.get_asks()[:5])
-            print("last update time {}".format(depth_cache.update_time))
-
-if __name__ == "__main__":
-
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-'''
