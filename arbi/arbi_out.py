@@ -44,14 +44,18 @@ def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn
 
     return t_q, t_q_fee
 
-def arbi_out_withdraw_ub_to_bn(ex: Exchanges, asset: str, t_q: float, t_q_fee: float, MANUAL_WITHDRAW: bool = False):
+def arbi_out_withdraw_ub_to_bn(ex: Exchanges, asset: str, t_q: float, t_q_fee: float, WITHDRAW_MODE: str = 'normal'):
     ub_wait_balance(ex, asset, t_q)
+
+    if WITHDRAW_MODE=='skip':
+        print("WITHDRAW_MODE==Skip")
+        return
 
     withdraw_uuid = None
     addr = bn_get_asset_addr(asset)
     memo = bn_get_asset_memo(asset)
     
-    if MANUAL_WITHDRAW:
+    if WITHDRAW_MODE=='manual':
         print(f"Manual Withdraw Mode, Please With as follows")
         print(f"Asset:{asset}, Q:{t_q}")
         print(f"TargetAddr:{addr}")
