@@ -141,3 +141,4 @@ cython_debug/
 bn-dump/
 *.csv
 fig/
+log.txt
