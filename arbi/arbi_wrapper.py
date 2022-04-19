@@ -32,7 +32,7 @@ def arbi_in_bn_to_ub(ex: Exchanges, asset: str, bn_p_usd: float, bn_f_usd: float
     return True
     
 
-def arbi_out_ub_to_bn(ex: Exchanges, asset: str, ub_p_krw: float, bn_f_usd: float, maxUSD: float, TEST: bool =True, BALANCED_CHEKED: bool =False):
+def arbi_out_ub_to_bn(ex: Exchanges, asset: str, ub_p_krw: float, bn_f_usd: float, maxUSD: float, MANUAL_WITHDRAW: bool = False, TEST: bool =True, BALANCED_CHEKED: bool =False):
     #1. check balance
     if not BALANCED_CHEKED:
         check = arbi_check_balace(ex, asset, maxUSD)
@@ -45,7 +45,7 @@ def arbi_out_ub_to_bn(ex: Exchanges, asset: str, ub_p_krw: float, bn_f_usd: floa
     t_q, t_q_fee = arbi_out_ubSpotBuy_bnFutShort(ex, asset, ub_p_krw, bn_f_usd, maxUSD, TEST)
 
     #### 3. swap exchange ####
-    arbi_out_withdraw_ub_to_bn(ex, asset, t_q, t_q_fee)
+    arbi_out_withdraw_ub_to_bn(ex, asset, t_q, t_q_fee, MANUAL_WITHDRAW)
 
     #### 4. Sell & UnHedge ####
     arbi_out_bnSpotSell_bnFutBuy(ex, asset, t_q_fee, TEST)

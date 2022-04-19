@@ -34,7 +34,7 @@ async def main():
 
     print("test out")
     task_out = asyncio.create_task(
-        arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_p_usd[OUT], maxUSD, ORDER_TEST)
+        arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_p_usd[OUT], maxUSD, False, ORDER_TEST)
     )
     
     print("wait")

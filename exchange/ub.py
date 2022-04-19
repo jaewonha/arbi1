@@ -123,6 +123,21 @@ def ub_wait_withdraw(ex: Exchanges, uuid: str):
         time.sleep(3)
         cnt = cnt+3
 
+def ub_get_pending_withdraw(ex: Exchanges):
+    resp =  ex.upbitClient.Withdraw.Withdraw_info_all()
+    '''
+    resp['result'][0]['txid']
+    resp['result'][0]['state']
+    'PROCESSING'
+    resp['result'][0]['created_at']
+    '2022-04-19T12:45:10+09:00'
+    resp['result'][0]['amount']
+    '406.1'
+    '''
+    results = resp['result']
+    pendings = list(filter(lambda r: r['txid']==None and r['state']=='PROCESSING', results))
+    return pendings
+
 def ub_wait_deposit(ex: Exchanges, txid: str):
     cnt = 0
     while True:

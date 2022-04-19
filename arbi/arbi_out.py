@@ -7,6 +7,8 @@ import multiprocessing
 from multiprocessing.dummy import Pool as ThreadPool
 from concurrent.futures import ThreadPoolExecutor
 
+import keyboard
+
 def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn_f_usd: float, maxUSD: float, TEST: bool):
     # #2a. Spot Buy
     maxKRW = maxUSD*ex.krwPerUsd
@@ -42,19 +44,44 @@ def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn
 
     return t_q, t_q_fee
 
-def arbi_out_withdraw_ub_to_bn(ex: Exchanges, asset: str, t_q: float, t_q_fee: float):
+def arbi_out_withdraw_ub_to_bn(ex: Exchanges, asset: str, t_q: float, t_q_fee: float, MANUAL_WITHDRAW: bool = False):
     ub_wait_balance(ex, asset, t_q)
+
+    withdraw_uuid = None
     addr = bn_get_asset_addr(asset)
     memo = bn_get_asset_memo(asset)
-    withdraw_uuid = ub_withdraw(ex, asset, t_q, addr, memo)
-    print(f"withdraw_uuid:{withdraw_uuid}")
+    
+    if MANUAL_WITHDRAW:
+        print(f"Manual Withdraw Mode, Please With as follows")
+        print(f"Asset:{asset}, Q:{t_q}")
+        print(f"TargetAddr:{addr}")
+        print(f"TargetMemo:{memo}")
+        print(f"Press any key after your manual withdraw done")
+        
+        while True:
+            pendings = ub_get_pending_withdraw(ex)
+            print(f"#pending withdraw:{len(pendings)}, waiting Q:{t_q}, press 's' to skip")
+            if len(pendings)==1 and float(pendings[0]['amount'])==t_q: #float comp?
+                withdraw_uuid = pendings[0]['uuid']
 
-    #3b. wait finished - UB
-    txid = ub_wait_withdraw(ex, withdraw_uuid)
-    print(f"txid:{txid}")
+            if keyboard.is_pressed("s"):
+                print(f"no withdraw uuid captured. wait Q:{t_q} on binance")
+                break
+            
+            time.sleep(1)
 
-    #3c. wait deposit - BN
-    bn_wait_deposit(ex, asset, txid)
+    else:
+        withdraw_uuid = ub_withdraw(ex, asset, t_q, addr, memo)
+
+    if withdraw_uuid != None:
+        print(f"withdraw_uuid:{withdraw_uuid}")
+
+        #3b. wait finished - UB
+        txid = ub_wait_withdraw(ex, withdraw_uuid)
+        print(f"txid:{txid}")
+
+        #3c. wait deposit - BN
+        bn_wait_deposit(ex, asset, txid)
     bn_wait_balance(ex, asset, t_q_fee) #wait balance available
 
 '''

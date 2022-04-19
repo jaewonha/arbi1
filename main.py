@@ -179,6 +179,7 @@ def main():
     IN_TRF_R        = config['IN_TRF_R'] #0.9
     ORDER_TEST      = config['ORDER_TEST'] #False
     CHECK_BACKWARD  = config['CHECK_BACKWARD']
+    MANUAL_WITHDRAW = config['MANUAL_WITHDRAW']
 
     ex = Exchanges()
     
@@ -234,7 +235,7 @@ def main():
             log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) maxUSD={maxUSD*maxUSDOutF} @{now}")
             #asset_before = get_asset_total(ex, asset)
             #log(f"(temp)asset_before:{asset_before}")
-            if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD*maxUSDOutF, ORDER_TEST, True):
+            if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD*maxUSDOutF, MANUAL_WITHDRAW, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'BN'
                 #asset_after = get_asset_total(ex, asset)
