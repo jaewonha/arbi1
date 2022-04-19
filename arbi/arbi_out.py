@@ -58,17 +58,18 @@ def arbi_out_withdraw_ub_to_bn(ex: Exchanges, asset: str, t_q: float, t_q_fee: f
         print(f"TargetMemo:{memo}")
         print(f"Press any key after your manual withdraw done")
         
-        while True:
-            pendings = ub_get_pending_withdraw(ex)
-            print(f"#pending withdraw:{len(pendings)}, waiting Q:{t_q}, press 's' to skip")
-            if len(pendings)==1 and float(pendings[0]['amount'])==t_q: #float comp?
-                withdraw_uuid = pendings[0]['uuid']
-
-            if keyboard.is_pressed("s"):
-                print(f"no withdraw uuid captured. wait Q:{t_q} on binance")
-                break
-            
-            time.sleep(1)
+        try:
+            while True:
+                pendings = ub_get_pending_withdraw(ex)
+                pendings_q = list(filter(lambda r: float(r['amount'])==t_q, pendings))
+                print(f"#pendings_q:{len(pendings_q)} for Q:{t_q}, press 'Ctrl+C' to skip")
+                if len(pendings_q)==1: #float comp?
+                    withdraw_uuid = pendings[0]['uuid']
+                    break
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print(f"no withdraw uuid captured. wait Q:{t_q} on binance")
+            pass
 
     else:
         withdraw_uuid = ub_withdraw(ex, asset, t_q, addr, memo)
