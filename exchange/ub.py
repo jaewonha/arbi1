@@ -17,6 +17,7 @@ def ub_wait_balance(ex: Exchanges, asset: str, t_q: float):
     while True:
         q = ub_get_spot_balance(ex, asset)
         if not (q < t_q):
+            print(f"[ub_wait_balance]ok q={q}")
             break
         print(f"[ub_wait_balance]{asset} < {t_q}")
         time.sleep(1)
@@ -116,6 +117,10 @@ def ub_wait_withdraw(ex: Exchanges, uuid: str):
         #print(txid)
         if cnt==10 or cnt%60==0:
             print(f"({cnt})ub_wait_withdraw: state={state}")
+
+        if state == 'PROCESSING' and txid != None:
+            print(f"({cnt})ub_wait_withdraw: PROCESSING && txid revealed")
+            return txid
 
         if state == 'DONE':
             print(f"({cnt})ub_wait_withdraw: done")
@@ -220,10 +225,15 @@ def ub_cancel_or_refund(client, order, TEST):
 
         time.sleep(1)
 '''
+def bn_get_asset_network(asset: str):
+    if asset == 'EOS': return 'EOS'
+    elif asset == 'ATOM': return 'Cosmos'
+    else: raise Exception(f'[bn_get_asset_network] not supported asset={asset}')
 
 def ub_get_asset_addr(asset: str):
     if asset == 'EOS': return ub_eos_addr
     elif asset == 'XRP': return ub_xrp_addr
+    elif asset == 'ATOM': return ub_atom_addr
     elif asset == 'TRX': return ub_trx_addr
     elif asset == 'DOGE': return ub_doge_addr
     elif asset == 'SC': return ub_sc_addr
@@ -233,6 +243,7 @@ def ub_get_asset_addr(asset: str):
 def ub_get_asset_memo(asset: str):
     if asset == 'EOS': return ub_eos_memo
     elif asset == 'XRP': return ub_xrp_memo
+    elif asset == 'ATOM': return ub_atom_memo
     elif asset == 'TRX': return ''
     elif asset == 'DOGE': return ''
     elif asset == 'SC': return ''
@@ -250,6 +261,7 @@ def ub_get_withdraw_fee(asset):
     if asset == 'EOS': return 0
     elif asset == 'TRX': return 1
     elif asset == 'XRP': return 1
+    elif asset == 'ATOM': return 0.01
     elif asset == 'DOGE': return 20
     elif asset == 'SC': return 0.1
     elif asset == 'FLOW': return 0.3

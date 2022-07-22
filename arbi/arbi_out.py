@@ -11,26 +11,35 @@ def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn
     # #2a. Spot Buy
     maxKRW = maxUSD*ex.krwPerUsd
     prec_p, prec_q = bn_get_precision_pq(asset)
+    f_prec_p, f_prec_q = bn_fut_precision_pq(asset)
     ub_p_krw = floor(ub_p_krw, prec_p) #floor target price to precision
     t_q = floor(maxKRW/ub_p_krw, prec_q) #spot 4, future 1 #<-
     fee = ub_get_withdraw_fee(asset)
     t_q_fee = floor(t_q-fee, prec_q) 
+    f_t_q_fee = floor(t_q-fee, f_prec_q) 
     ub_order = bn_order = None
 
     # #2b. Futures Short
     #f_t_p, f_av_q = wait_bn_future_settle(ex, asset, bn_p_usd)
     f_t_p = bn_f_usd #assume fut price is used calc kimp
 
+    SKIP_BUY_FOR_DEBUG = False
+    if SKIP_BUY_FOR_DEBUG: 
+        t_q = 1.69
+        fee = ub_get_withdraw_fee(asset)
+        t_q_fee = floor(t_q-fee, prec_q) 
+        return t_q, t_q_fee
+
     #thread order
     if False: #seq
         ub_order = ub_spot_trade(ex, asset, TRADE_BUY, ub_p_krw, t_q, TEST)
         ub_wait_order(ex, ub_order, TEST) 
-        bn_order = bn_fut_trade(ex, asset, TRADE_SELL, f_t_p, t_q, TEST)
+        bn_order = bn_fut_trade(ex, asset, TRADE_SELL, f_t_p, f_t_q_fee, TEST)
         bn_wait_order(ex, bn_order, BN_FUT, TEST)
     else: #thread
         pool = ThreadPoolExecutor(2)
         ret1 = pool.submit(lambda p: ub_spot_trade(*p), [ex, asset, TRADE_BUY, ub_p_krw, t_q, TEST])
-        ret2 = pool.submit(lambda p: bn_fut_trade(*p),  [ex, asset, TRADE_SELL, f_t_p, t_q, TEST])
+        ret2 = pool.submit(lambda p: bn_fut_trade(*p),  [ex, asset, TRADE_SELL, f_t_p, f_t_q_fee, TEST]) #t_q -> t_q_fee. check bugs
         ub_order = ret1.result()
         bn_order = ret2.result()    
         ub_wait_order(ex, ub_order, TEST) #multi thread
@@ -43,18 +52,19 @@ def arbi_out_ubSpotBuy_bnFutShort(ex: Exchanges, asset: str, ub_p_krw: float, bn
     return t_q, t_q_fee
 
 def arbi_out_withdraw_ub_to_bn(ex: Exchanges, asset: str, t_q: float, t_q_fee: float):
-    ub_wait_balance(ex, asset, t_q)
+    ub_wait_balance(ex, asset, t_q) #skip
     addr = bn_get_asset_addr(asset)
     memo = bn_get_asset_memo(asset)
-    withdraw_uuid = ub_withdraw(ex, asset, t_q, addr, memo)
+    #'''skip
+    withdraw_uuid = ub_withdraw(ex, asset, t_q_fee, addr, memo)
     print(f"withdraw_uuid:{withdraw_uuid}")
 
     #3b. wait finished - UB
     txid = ub_wait_withdraw(ex, withdraw_uuid)
     print(f"txid:{txid}")
-
+    #'''skip
     #3c. wait deposit - BN
-    bn_wait_deposit(ex, asset, txid)
+    bn_wait_deposit(ex, asset, txid) #skip
     bn_wait_balance(ex, asset, t_q_fee) #wait balance available
 
 '''
@@ -88,8 +98,12 @@ def arbi_out_bnSpotSell_bnFutBuy(ex: Exchanges, asset: str, t_q: float, TEST):
         bnFut1st = bn_fut_depth(ex, asset, 0)
         f_t_p = bnFut1st[ASK][0]
 
-        if bn_is_backward(bnSpot1st, bnFut1st):
-            print(f"[arbi_out_bnSpotSell_bnFutBuy]backward ({t_p}) < ({f_t_p}) fail")
+        #if bn_is_backward(bnSpot1st, bnFut1st):
+            #print(f"[arbi_out_bnSpotSell_bnFutBuy]backward ({t_p}) < ({f_t_p}) fail")
+            #time.sleep(1)
+        pre_p,_ = bn_fut_precision_pq(asset)
+        if not bn_is_sellInRange(bnSpot1st, bnFut1st, pre_p):
+            print(f"[arbi_out_bnSpotSell_bnFutBuy]not in range abs[ ({t_p}) - ({f_t_p}) ] < 0.002 (ticks) fail")
             time.sleep(1)
         else:
             break

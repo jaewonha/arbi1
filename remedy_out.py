@@ -11,13 +11,14 @@ ex = Exchanges()
 
 
 asset = 'EOS'
-t_q = 2824.3 #303.3
-t_q_fee = 1086.8 #upbit spot, binance fut short q
+t_q = 2161.2 #303.3
+fee = 0.0 #EOS fee 0
+t_q_fee = t_q - fee
 #outTh = 3.5
 TEST = False
 
 #asset_before = get_asset_total(ex, asset)
-#arbi_out_withdraw_ub_to_bn(ex, asset, t_q)
+arbi_out_withdraw_ub_to_bn(ex, asset, t_q, t_q_fee)
 arbi_out_bnSpotSell_bnFutBuy(ex, asset, t_q, TEST)
 #asset_after = get_asset_total(ex, asset)
 #maxUSD = 4.475*1086.8

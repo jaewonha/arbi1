@@ -34,13 +34,13 @@ def arbi_in_bnSpotBuy_bnFutShort(ex: Exchanges, asset: str, bn_p_usd: float, bn_
 
     return t_q, t_q_fee
 
-def arbi_in_withdraw_bn_to_ub(ex: Exchanges, asset: str, t_q: float, t_q_fee: float):
+def arbi_in_withdraw_bn_to_ub(ex: Exchanges, asset: str, network:str, t_q: float, t_q_fee: float):
     bn_wait_balance(ex, asset, t_q)
 
     #3a. withdraw
     addr = ub_get_asset_addr(asset)
     memo = ub_get_asset_memo(asset)
-    withdraw_id = bn_withdraw(ex, asset, addr, memo, t_q)
+    withdraw_id = bn_withdraw(ex, asset, addr, network, memo, t_q)
     print(f"withdraw_id:{withdraw_id}")
 
     #3b. wait finished - BN

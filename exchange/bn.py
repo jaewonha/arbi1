@@ -3,6 +3,7 @@ import math
 import itertools
 
 from util.log import log
+from util.math import *
 from classes import *
 
 from arbi.arbi_common import *
@@ -15,7 +16,9 @@ def bn_get_spot_balance(ex: Exchanges, asset: str, doRound: bool = True):
     balance = ex.binance.get_asset_balance(asset=asset)
     #assert ( balance['asset'] == 'EOS' or balance['asset'] == 'USDT' or balance['asset'] == 'BNB')
     if doRound:
-        s_q = math.floor(float(balance['free'])*10)/10 #2자리 미만 안쓰임
+        _, prec_q = bn_get_precision_pq(asset)
+        #s_q = math.floor(float(balance['free'])*10)/10 #2자리 미만 안쓰임
+        s_q = floor( float(balance['free']), prec_q ) #2자리 미만 안쓰임
     else:
         s_q = float(balance['free'])
     #print(f"eos: q={s_q}")
@@ -242,7 +245,7 @@ def bn_wait_order(ex: Exchanges, order: dict, type: int, TEST: bool):
 
 def bn_get_deposit(ex: Exchanges, asset: str, txid: str):
     result = ex.binance.get_deposit_history(coin=asset)
-    filtered = list(filter(lambda x: x['txId'] == txid, result))
+    filtered = list(filter(lambda x: x['txId'] == txid.upper(), result))
     return filtered
 
 def bn_wait_deposit(ex: Exchanges, asset: str, txid: str):
@@ -261,9 +264,10 @@ def bn_wait_deposit(ex: Exchanges, asset: str, txid: str):
         time.sleep(3)
         cnt = cnt + 3
 
-def bn_withdraw(ex: Exchanges, asset: str, addr: str, tag: str, t_q: float):
+def bn_withdraw(ex: Exchanges, asset: str, addr: str, network: str, tag: str, t_q: float):
     withdraw = ex.binance.withdraw(
         coin=asset,
+        network=network,
         address=addr,
         addressTag=tag, #or TAG
         amount=t_q)    
@@ -373,10 +377,15 @@ def bn_get_fut_pending_amt(ex: Exchanges, asset: str)->float:
 def bn_is_backward(bnSpot1st, bnFut1st)->bool: #type hint float array
     return bnFut1st[BID][0] + 0.002 < bnSpot1st[ASK][0] #2tick
 
+def bn_is_sellInRange(bnSpot1st, bnFut1st, pre_p)->bool: #type hint float array
+    tick = 10**(-pre_p)
+    #return abs(bnFut1st[BID][0] - bnSpot1st[ASK][0]) < tick*2 #0.002  #2tick #reversed for safety
+    return abs(bnFut1st[ASK][0] - bnSpot1st[BID][0]) < tick*2 #0.002  #2tick
 
 def bn_get_asset_addr(asset: str):
     if asset == 'EOS': return bn_eos_addr
     elif asset == 'XRP': return bn_xrp_addr
+    elif asset == 'ATOM': return bn_atom_addr
     elif asset == 'TRX': return bn_trx_addr
     elif asset == 'DOGE': return bn_doge_addr
     elif asset == 'SC': return bn_sc_addr
@@ -386,6 +395,7 @@ def bn_get_asset_addr(asset: str):
 def bn_get_asset_memo(asset: str):
     if asset == 'EOS': return bn_eos_memo
     elif asset == 'XRP': return bn_xrp_memo
+    elif asset == 'ATOM': return bn_atom_memo
     elif asset == 'TRX': return ''
     elif asset == 'DOGE': return ''
     elif asset == 'SC': return ''
@@ -393,18 +403,26 @@ def bn_get_asset_memo(asset: str):
     else: raise Exception(f'[bn_get_asset_memo] not supported asset={asset}')
 
 def bn_get_precision_pq(asset: str):
-    if asset == 'EOS': return 3, 1 #p, q
-    elif asset == 'XRP': return 4, 0
+    if asset == 'EOS': return 3, 1 #p, q #1:소숫점 한자리
+    elif asset == 'XRP': return 4, 0 #0:정수
+    elif asset == 'ATOM': return 2, 2 
     elif asset == 'TRX': return 5, 1
     elif asset == 'DOGE': return 4, 0 
     elif asset == 'SC': return 5, 0 
     elif asset == 'FLOW': return 2, 2 
+    elif asset == 'USDT': return 3, 1 #same as eos
+    else: raise Exception(f'[bn_get_precision_p] not supported asset={asset}')
+
+def bn_fut_precision_pq(asset: str):
+    if asset == 'EOS': return 3, 1 #p, q #1:소숫점 한자리
+    elif asset == 'ATOM': return 3, 2 
     else: raise Exception(f'[bn_get_precision_p] not supported asset={asset}')
 
 def bn_get_withdraw_fee(asset):
     if asset == 'EOS': return 0.1
     elif asset == 'TRX': return 1
     elif asset == 'XRP': return 0.25
+    elif asset == 'ATOM': return 0.005
     elif asset == 'DOGE': return 5
     elif asset == 'SC': return 0.1
     elif asset == 'FLOW': return 0.01

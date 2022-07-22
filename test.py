@@ -5,25 +5,25 @@ from main import *
 
 ex = Exchanges()
 
-asset = 'FLOW'
-maxUSD = 20
+asset = 'ATOM'
+maxUSD = 50
 OUT_TH = 100.0 #숫자가 작을때 (손해) 나가려고 하니 큰 숫자를 쓰면 무조건 나감
 IN_TH = 0.0 #숫자가 클떄 들어오(이득)려고 하니 작은 숫자를 쓰면 무조건 들어옴
 TEST = False
-TEST_OUT = False
-TEST_IN = True
+TEST_OUT = True
+TEST_IN = False
 
 #test
-q = ub_get_spot_balance(ex, ub_krw_pair('boba'))
-print(q)
-exit(0)
+#q = ub_get_spot_balance(ex, ub_krw_pair('boba'))
+#print(q)
+#exit(0)
 
 if True: #exchange test
     arbi_check_balace(ex, asset, maxUSD) #opt
 
     if TEST_OUT:
         while True:
-            ub_p_krw, bn_p_usd, bn_f_usd, kimp, validity = calc_kimp(ex, asset, maxUSD=maxUSD)
+            ub_p_krw, bn_p_usd, bn_f_usd, kimp, validity = calc_kimp(ex, asset, maxUSD=maxUSD, CHECK_BACKWARD=False)
             if validity[OUT]: break
     
         print("test out")
