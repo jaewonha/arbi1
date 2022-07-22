@@ -28,7 +28,7 @@ if True: #exchange test
     
         print("test out")
         asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
-        arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD, TEST)
+        arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD, 'normal', TEST)
         asset_after = get_asset_total(ex, asset)
         print_arbi_stat(asset_before, asset_after, +IN_TH, maxUSD, ex.krwPerUsd)
 

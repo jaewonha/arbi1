@@ -178,6 +178,8 @@ def main():
     asset           = config['asset'] #"EOS" #target asset to trade arbi
     IN_TRF_R        = config['IN_TRF_R'] #0.9
     ORDER_TEST      = config['ORDER_TEST'] #False
+    CHECK_BACKWARD  = config['CHECK_BACKWARD']
+    WITHDRAW_MODE   = config['WITHDRAW_MODE']
 
     ex = Exchanges()
     
@@ -211,7 +213,7 @@ def main():
         #asset_before = None #asset_before = get_asset_total(ex, asset) #opt. before calc KIMP
         check = arbi_check_balace(ex, asset, maxUSD) #opt
         assert check['Common']
-        ub_p_krw, bn_p_usd, bn_f_usd, kimp, kimpValidity = calc_kimp(ex, asset)
+        ub_p_krw, bn_p_usd, bn_f_usd, kimp, kimpValidity = calc_kimp(ex, asset, CHECK_BACKWARD)
 
         print(f"KIMP[IN] :{kimp[IN]}% (UB={toUsd(ex, ub_p_krw[IN])}, BN={bn_p_usd[IN] })")
         print(f"KIMP[OUT]:{kimp[OUT]}% (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}), KIMPDiff:{round(kimp[IN]-kimp[OUT], 2)}%")
@@ -233,7 +235,7 @@ def main():
             log(f">>> time to flight(UB->BN)! kimp={kimp[OUT]} (UB={toUsd(ex, ub_p_krw[OUT])}, BN={bn_p_usd[OUT]}) maxUSD={maxUSD*maxUSDOutF} @{now}")
             #asset_before = get_asset_total(ex, asset)
             #log(f"(temp)asset_before:{asset_before}")
-            if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD*maxUSDOutF, ORDER_TEST, True):
+            if arbi_out_ub_to_bn(ex, asset, ub_p_krw[OUT], bn_f_usd[OUT], maxUSD*maxUSDOutF, WITHDRAW_MODE, ORDER_TEST, True):
                 cnt = cnt + 1
                 if STATUS_CHANGE: status = 'BN'
                 #asset_after = get_asset_total(ex, asset)

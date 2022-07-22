@@ -18,7 +18,7 @@ ex = Exchanges()
 
 lastMin = None
 delay = 1
-asset ='ATOM'
+asset = 'EOS'
 # check asset is listed on futres market
 
 while True:
